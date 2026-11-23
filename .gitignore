@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Builds of the demo (export/ is committed on purpose: it is what the app takes)
+dist/
+out/
+.vite/
+*.tgz
+*.tsbuildinfo
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+.npmrc
+
+# Deployment and tooling state
+.vercel/
+.claude/
+.cache/
+.eslintcache
+coverage/
+*.lcov
+
+# Logs
+logs/
+*.log
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# System files
+.DS_Store
+Thumbs.db

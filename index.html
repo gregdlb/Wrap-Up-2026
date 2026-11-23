@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wrap Up 2026 · component demo</title>
+    <link rel="icon" href="data:," />
+    <!-- Demo only: the app loads these fonts itself, the components do not bundle them. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Hedvig+Letters+Serif&family=Rethink+Sans:wght@400..800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main class="demo">
+      <section class="stage" aria-label="Screen 05 preview">
+        <div class="phone" id="phone">
+          <div class="screen" id="screen">
+            <div class="screen__layer" id="arc"></div>
+            <div class="screen__layer" id="layer-back"></div>
+
+            <div class="progress" id="progress"></div>
+            <header class="header">
+              <img src="/demo/assets/ui/brevy-logo.svg" width="91.205" height="32" alt="Brevy" />
+              <div class="header__close"><img src="/demo/assets/ui/icon-x.svg" width="18" height="18" alt="" /></div>
+            </header>
+
+            <div class="content">
+              <span class="tag" id="tag"></span>
+              <div class="headline" id="headline"></div>
+              <p class="body" id="body"></p>
+            </div>
+
+            <div class="card-box stills" id="stills-behind"></div>
+            <div class="card-box" id="card"></div>
+            <div class="card-box stills" id="stills-front"></div>
+            <div class="screen__layer" id="layer-front"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <p class="panel__eyebrow">Wrap Up 2026 · component demo</p>
+        <h1 id="title"></h1>
+        <p class="panel__lead">
+          The cards, the falling pieces and the money rain are the components. Background, header, text and the still
+          illustrations are context from Figma; the illustrations will be the animator's MP4 or Lottie.
+        </p>
+
+        <label class="field" for="screen-select">
+          <span>Screen</span>
+          <select id="screen-select"></select>
+        </label>
+
+        <label class="field" for="device">
+          <span>Phone</span>
+          <select id="device"></select>
+        </label>
+
+        <div class="controls" id="controls"></div>
+
+        <button type="button" id="replay" class="primary">Replay</button>
+
+        <label class="field" for="seek">
+          <span>Seek <output id="seek-value">0.00 s</output></span>
+          <input type="range" id="seek" min="0" max="6" step="0.01" value="0" />
+        </label>
+
+        <div class="readout">
+          <p class="readout__title">Variant <strong id="note"></strong></p>
+          <p class="readout__title">Data passed to the component</p>
+          <pre id="json"></pre>
+        </div>
+      </aside>
+    </main>
+    <script type="module" src="/demo/main.ts"></script>
+  </body>
+</html>

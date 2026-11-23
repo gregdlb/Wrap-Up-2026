@@ -1,0 +1,1190 @@
+[
+  {
+    "month": "January",
+    "nodeId": "23534:27814",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "sky-100",
+        "hex": "#e0f2fe"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/sky\\/100,#e0f2fe)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/january/6d7d9.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#e0f2fe",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "sky-200",
+        "hex": "#bae6fd"
+      },
+      "color": {
+        "token": "sky-900",
+        "hex": "#0c4a6e"
+      },
+      "text": "January"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "38 visits, more than any other month."
+    }
+  },
+  {
+    "month": "February",
+    "nodeId": "23534:27899",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "blue-100",
+        "hex": "#dbeafe"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/blue\\/100,#dbeafe)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/february/dc219.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#dbeafe",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "blue-200",
+        "hex": "#bfdbfe"
+      },
+      "color": {
+        "token": "blue-900",
+        "hex": "#1e3a8a"
+      },
+      "text": "February"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "35 visits, more than any other month."
+    }
+  },
+  {
+    "month": "March",
+    "nodeId": "23534:27984",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "olive-200",
+        "hex": "#e6eedc"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/olive\\/200,#e6eedc)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/march/e8263.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#e6eedc",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "color": {
+        "token": "brand-600",
+        "hex": "#055e34"
+      },
+      "text": "March"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "36 visits, more than any other month."
+    }
+  },
+  {
+    "month": "April",
+    "nodeId": "23534:28069",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "olive-200",
+        "hex": "#e6eedc"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/olive\\/200,#e6eedc)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/april/e8263.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#e6eedc",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "yellow-300",
+        "hex": "#fbd48a"
+      },
+      "color": {
+        "token": "yellow-900",
+        "hex": "#734c1b"
+      },
+      "text": "April"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "41 visits, more than any other month."
+    }
+  },
+  {
+    "month": "May",
+    "nodeId": "23534:28154",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "violet-200",
+        "hex": "#e9deff"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/violet\\/200,#e9deff)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/may/e559f.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 210,
+        "y1": 431,
+        "x2": 210,
+        "y2": -67,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#e9deff",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "violet-300",
+        "hex": "#ddcefe"
+      },
+      "color": {
+        "token": "violet-900",
+        "hex": "#5e528c"
+      },
+      "text": "May"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "39 visits, more than any other month."
+    }
+  },
+  {
+    "month": "June",
+    "nodeId": "23534:28239",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "yellow-100",
+        "hex": "#fef1d8"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/yellow\\/100,#fef1d8)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/june/2f6a8.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#fef1d8",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "yellow-300",
+        "hex": "#fbd48a"
+      },
+      "color": {
+        "token": "yellow-900",
+        "hex": "#734c1b"
+      },
+      "text": "June"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "37 visits, more than any other month."
+    }
+  },
+  {
+    "month": "July",
+    "nodeId": "23534:28324",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "yellow-100",
+        "hex": "#fef1d8"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/yellow\\/100,#fef1d8)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/july/2f6a8.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#fef1d8",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "yellow-300",
+        "hex": "#fbd48a"
+      },
+      "color": {
+        "token": "yellow-900",
+        "hex": "#734c1b"
+      },
+      "text": "July"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "40 visits, more than any other month."
+    }
+  },
+  {
+    "month": "August",
+    "nodeId": "23534:28409",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "yellow-200",
+        "hex": "#fde4b2"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/yellow\\/200,#fde4b2)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/august/6841f.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#fde4b2",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "yellow-300",
+        "hex": "#fbd48a"
+      },
+      "color": {
+        "token": "yellow-900",
+        "hex": "#734c1b"
+      },
+      "text": "August"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "42 visits, more than any other month."
+    }
+  },
+  {
+    "month": "September",
+    "nodeId": "23534:28494",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "rose-100",
+        "hex": "#ffe4e6"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/rose\\/100,#ffe4e6)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/september/2cec0.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#ffe4e6",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "red-200",
+        "hex": "#fecaca"
+      },
+      "color": {
+        "token": "red-900",
+        "hex": "#7f1d1d"
+      },
+      "text": "September"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "34 visits, more than any other month."
+    }
+  },
+  {
+    "month": "October",
+    "nodeId": "23534:28579",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "orange-200",
+        "hex": "#fbd2b8"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/orange\\/200,#fbd2b8)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/october/bc99a.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#fbd2b8",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "orange-300",
+        "hex": "#f7b88f"
+      },
+      "color": {
+        "token": "orange-900",
+        "hex": "#6f3313"
+      },
+      "text": "October"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "33 visits, more than any other month."
+    }
+  },
+  {
+    "month": "November",
+    "nodeId": "23534:28664",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "stone-100",
+        "hex": "#eadfd2"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/stone\\/100,#eadfd2)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/november/c3547.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#eadfd2",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "orange-300",
+        "hex": "#f7b88f"
+      },
+      "color": {
+        "token": "amber-900",
+        "hex": "#78350f"
+      },
+      "text": "November"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "31 visits, more than any other month."
+    }
+  },
+  {
+    "month": "December",
+    "nodeId": "23534:28749",
+    "background": {
+      "type": "linear-gradient",
+      "direction": "to bottom",
+      "from": {
+        "token": "slate-100",
+        "hex": "#f1f5f9"
+      },
+      "to": {
+        "token": "beige-500",
+        "hex": "#f5f2ef"
+      },
+      "rawClasses": "bg-gradient-to-b from-[var(--tailwind-colors\\/slate\\/100,#f1f5f9)] relative size-full to-[var(--tailwind-colors\\/beige\\/500,#f5f2ef)]"
+    },
+    "arc": {
+      "src": "assets/months/december/555a3.svg",
+      "outer": {
+        "left": -126,
+        "top": -120,
+        "width": 550,
+        "height": 550
+      },
+      "rotate": 90,
+      "inner": {
+        "width": 550,
+        "height": 550
+      },
+      "inset": {
+        "top": "0",
+        "right": "0",
+        "bottom": "5.45%",
+        "left": "50%"
+      },
+      "extraClasses": "",
+      "rawClasses": "absolute flex items-center justify-center left-[-126px] size-[550px] top-[-120px] | flex-none rotate-90 | relative size-[550px] | absolute bottom-[5.45%] left-1/2 right-0 top-0 | block max-w-none size-full",
+      "intrinsic": {
+        "width": 275,
+        "height": 520.027
+      },
+      "gradient": {
+        "type": "linearGradient",
+        "units": "userSpaceOnUse (viewBox 0 0 275 520.027)",
+        "x1": 224,
+        "y1": 345,
+        "x2": 213,
+        "y2": -26,
+        "stops": [
+          {
+            "offset": 0,
+            "color": "#f1f5f9",
+            "opacity": 1
+          },
+          {
+            "offset": 1,
+            "color": "#fefdfc",
+            "opacity": 1
+          }
+        ]
+      }
+    },
+    "tag": {
+      "bg": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "color": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "text": "Busiest month"
+    },
+    "highlight": {
+      "bg": {
+        "token": "olive-500",
+        "hex": "#d7e4c9"
+      },
+      "color": {
+        "token": "brand-600",
+        "hex": "#055e34"
+      },
+      "text": "December"
+    },
+    "headline": {
+      "color": {
+        "token": "emerald-500",
+        "hex": "#023620"
+      },
+      "text": "your busiest month"
+    },
+    "body": {
+      "color": {
+        "token": "zinc-800",
+        "hex": "#27272a"
+      },
+      "text": "30 visits, more than any other month."
+    }
+  }
+]

@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="275" height="520.027" viewBox="0 0 275 520.027" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path id="Bold arc" d="M0 0C61.7702 -2.70006e-06 121.742 20.7963 170.251 59.0378C218.76 97.2794 252.982 150.739 267.402 210.803C281.822 270.866 275.6 334.035 249.739 390.131C223.879 446.228 179.885 491.984 124.847 520.027L99.8779 471.021C143.908 448.587 179.103 411.982 199.792 367.105C220.48 322.228 225.457 271.693 213.921 223.642C202.385 175.591 175.008 132.824 136.201 102.23C97.3933 71.637 49.4162 55 0 55V0Z" fill="url(#paint0_linear_0_22)"/>
+<defs>
+<linearGradient id="paint0_linear_0_22" x1="224" y1="345" x2="211" y2="105" gradientUnits="userSpaceOnUse">
+<stop stop-color="#F6F3F0"/>
+<stop offset="1" stop-color="#FEFDFC"/>
+</linearGradient>
+</defs>
+</svg>
