@@ -11,6 +11,7 @@ export * from './pay-card';
 export * from './money-rain';
 export * from './top-caregiver-card';
 export * from './thank-you-card';
+export * from './sound-button';
 export { preloadWrapUpAssets } from './preload';
 export type { PreloadOptions } from './preload';
 export { keepTogether } from './text';

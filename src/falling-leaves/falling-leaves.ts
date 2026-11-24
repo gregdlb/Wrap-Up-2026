@@ -68,6 +68,12 @@ const STYLES = /* css */ `
 }
 `;
 
+/**
+ * The pieces that are whole flowers, by their Figma layers: the snowdrops of March, the lilac florets of May
+ * and the daisies of June. Petals (April, August) and leaves (September to November) are light and swing.
+ */
+const FLOWERS = /snowdrop|lilac-floret|daisy/;
+
 /** Seconds after `play()` at which the looping pieces pass through their Figma positions. */
 const HOME_AT = 3;
 const FADE_IN = 0.6;
@@ -75,29 +81,54 @@ const TAU = Math.PI * 2;
 
 /**
  * Speeds are Figma px per second, angles degrees, times seconds.
- * Tuned to the reference video (reference/Demo_m1.mp4): leaves come down at 60–85 px/s, travel in wide slow
- * arcs of 40–80 px over 10–14 s, turn slowly and rock a little on the way.
+ * A falling piece swings like a pendulum (see `swing`): `period` is one swing there and back, `reach` how far
+ * it goes to each side, `lean` how far it tips into its direction of travel, `stall` how much of its fall it
+ * loses at the ends of a swing (and gains in the middle). `narrow` is the turn in depth it makes now and then:
+ * every `every` seconds, for `seconds`, down to `to` of its width. On top of that it drifts in a wide slow arc.
+ * Every piece draws its own values from these ranges, so no two move together.
  */
 const MOTION = {
   tumbles: {
-    speed: [60, 84],
-    spin: [120, 220],
-    rock: [8, 16],
-    rockPeriod: [2.8, 3.8],
-    meander: [36, 64],
+    speed: [50, 70],
+    period: [2.5, 3.6],
+    reach: [22, 38],
+    lean: [20, 32],
+    stall: [0.75, 1],
+    narrow: { every: [3.6, 5.6], seconds: [0.8, 1.15], to: [0.12, 0.35] },
+    heading: [10, 22],
+    headingPeriod: [8, 12],
+    meander: [16, 30],
     meanderPeriod: [10, 14],
     respawn: 40,
   },
   sways: {
-    speed: [48, 60],
-    tilt: [14, 22],
-    flutter: [6, 10],
-    flutterPeriod: [3.2, 4.2],
-    meander: [30, 50],
-    meanderPeriod: [7, 9],
+    speed: [40, 54],
+    period: [3, 4.2],
+    reach: [16, 28],
+    lean: [14, 24],
+    stall: [0.65, 0.9],
+    narrow: { every: [5.5, 8.5], seconds: [0.9, 1.3], to: [0.3, 0.55] },
+    heading: [6, 14],
+    headingPeriod: [9, 13],
+    meander: [12, 24],
+    meanderPeriod: [8, 11],
     respawn: 40,
   },
-  lands: { firstAt: 4.4, gap: 0.8, speed: 70, easePower: 1.6, swayAmp: [14, 22], swings: 1.5, spin: [50, 90] },
+  lands: { firstAt: 4.4, gap: 0.8, speed: 70, easePower: 1.6, period: [1.9, 2.6], reach: [18, 30], lean: [18, 28], spin: [20, 45] },
+  /**
+   * A whole flower is heavier than a leaf or a petal: it comes straight down at an even speed, turning
+   * slowly around itself (`spin`, degrees per second, either way), with only a slight slow drift sideways.
+   * `landSpin` is how far a flower that lands still turns on its way down.
+   */
+  flowers: {
+    speed: { tumbles: [58, 78], sways: [48, 62] },
+    spin: [14, 38],
+    drift: [5, 12],
+    driftPeriod: [9, 14],
+    respawn: 40,
+    landSpin: [50, 120],
+    landDrift: [4, 9],
+  },
   bursts: { period: [4.8, 5.6], firstLead: 0.6, lead: 0.45, grow: 0.45, appear: 0.25, holdUntil: 0.55, goneBy: 0.8 },
   snow: { speedBase: 14, speedPerRadius: 8, swayAmp: [3, 8], swayPeriod: [4, 7], respawn: 30, softSize: 2.2 },
   /** How strongly a piece near a screen edge arcs towards the middle rather than off screen (0–1). */
@@ -110,6 +141,8 @@ interface Pose {
   rotate: number;
   scale: number;
   opacity: number;
+  /** Width as a share of the full width while the piece turns in depth; 1 when it faces the viewer. */
+  narrow?: number;
 }
 
 /** Where the Figma frame sits inside the layer, in layout px. */
@@ -160,110 +193,189 @@ function tripOffset(seed: number, trip: number): number {
   return (value - Math.floor(value)) * 2 - 1;
 }
 
-interface FallMotion {
-  seed: number;
-  speed: number;
-  /** Wide slow arc. */
-  meander: number;
-  meanderPeriod: number;
-  /** +1 or -1: which way the arc is heading at the Figma position. */
-  meanderTurn: number;
-  /** Small quick side to side movement on top of the arc. */
-  flutter: number;
-  flutterPeriod: number;
+/** One swing of a pendulum at a moment in time. */
+interface Swing {
+  /** Where it is between the ends of the swing, -1 to 1. Slow at the ends, fastest through the middle. */
+  side: number;
+  /** How fast it is moving sideways, -1 to 1: positive to the right. */
+  pace: number;
+  /** Extra fall so far, in swings: the piece drops fastest through the middle and almost hangs at the ends. */
+  drop: number;
+}
+
+/**
+ * A pendulum `time` seconds in: the sideways position is a sine, so the piece slows towards each end and
+ * speeds up through the middle by itself; its pace is the cosine, a quarter turn ahead.
+ */
+function swing(time: number, period: number, phase: number): Swing {
+  const angle = (TAU * time) / period + phase;
+  return { side: Math.sin(angle), pace: Math.cos(angle), drop: Math.sin(2 * angle) };
+}
+
+interface FloatRanges {
+  speed: Range;
+  period: Range;
+  reach: Range;
+  lean: Range;
+  stall: Range;
+  narrow: { every: Range; seconds: Range; to: Range };
+  heading: Range;
+  headingPeriod: Range;
+  meander: Range;
+  meanderPeriod: Range;
   respawn: number;
 }
 
 /**
- * A piece that keeps falling from above the layer to below it.
- * Its timing is set so that it is exactly at its Figma position at HOME_AT.
+ * A piece that keeps floating down from above the layer to below it, swinging from side to side.
+ * It leans into the direction it is travelling, loses most of its fall at the ends of each swing and makes
+ * it up through the middle, and now and then turns in depth so that it narrows for a moment.
+ * Its timing is set so that it is exactly at its Figma position, at its Figma angle, at HOME_AT.
  */
-function fallingPose(elapsed: number, home: Pose, layout: Layout, pad: number, motion: FallMotion) {
-  const sinceHome = elapsed - HOME_AT;
-  const span = layout.height + pad * 2;
-  const duration = span / (motion.speed * layout.scale);
-  const homeFraction = (home.y + pad) / span;
-  const trips = sinceHome / duration + homeFraction;
-  const trip = Math.floor(trips);
-  const fraction = trips - trip;
-  const column = trip === 0 ? 0 : tripOffset(motion.seed, trip) * motion.respawn;
+function floats(seed: number, size: number, ranges: FloatRanges): Sprite['pose'] {
+  const random = createRandom(seed);
+  const speed = random.between(ranges.speed);
+  const period = random.between(ranges.period);
+  const reach = random.between(ranges.reach);
+  const lean = random.between(ranges.lean);
+  // How far the fall is ahead or behind an even fall, at most: a share of the distance of half a swing.
+  const stall = (random.between(ranges.stall) * speed * period) / (2 * TAU);
+  // Where in its swing the piece is at HOME_AT: different for each, so they never move in step.
+  const phase = random.between([0, TAU]);
+  const heading = random.between(ranges.heading);
+  const headingPeriod = random.between(ranges.headingPeriod);
+  const headingPhase = random.between([0, TAU]);
+  const meander = random.between(ranges.meander);
+  const meanderPeriod = random.between(ranges.meanderPeriod);
+  const meanderTurn = random.sign();
+  const narrowEvery = random.between(ranges.narrow.every);
+  const narrowSeconds = random.between(ranges.narrow.seconds);
+  const narrowTo = random.between(ranges.narrow.to);
+  // Never in the middle of a turn at HOME_AT, where the piece shows as Figma draws it.
+  const narrowLead = random.between([narrowSeconds + 0.3, narrowEvery - 0.3]);
+  const atHome = swing(0, period, phase);
 
-  // The arc is shifted so that it passes through the Figma position and leans towards the middle of the screen.
-  const centre = layout.width / 2;
-  const bias = Math.min(Math.max((centre - home.x) / centre, -1), 1) * MOTION.inwardBias;
-  const phase = motion.meanderTurn > 0 ? Math.asin(-bias) : Math.PI - Math.asin(-bias);
-  const arc = motion.meander ? Math.sin((TAU * sinceHome) / motion.meanderPeriod + phase) - Math.sin(phase) : 0;
-  const flutter = Math.sin((TAU * sinceHome) / motion.flutterPeriod);
+  return (elapsed, home, layout) => {
+    const sinceHome = elapsed - HOME_AT;
+    const now = swing(sinceHome, period, phase);
 
-  return {
-    fraction: fraction - homeFraction,
-    flutter,
-    x: home.x + (column + arc * motion.meander + flutter * motion.flutter) * layout.scale,
-    y: -pad + fraction * span,
+    // The even fall, wrapping from the bottom of the layer back to the top.
+    const pad = (size + stall + 12) * layout.scale;
+    const span = layout.height + pad * 2;
+    const duration = span / (speed * layout.scale);
+    const homeFraction = (home.y + pad) / span;
+    const trips = sinceHome / duration + homeFraction;
+    const trip = Math.floor(trips);
+    const column = trip === 0 ? 0 : tripOffset(seed, trip) * ranges.respawn;
+
+    // A wide slow arc under the swinging, shifted so that it leans towards the middle of the screen.
+    const centre = layout.width / 2;
+    const bias = Math.min(Math.max((centre - home.x) / centre, -1), 1) * MOTION.inwardBias;
+    const arcPhase = meanderTurn > 0 ? Math.asin(-bias) : Math.PI - Math.asin(-bias);
+    const arc = Math.sin((TAU * sinceHome) / meanderPeriod + arcPhase) - Math.sin(arcPhase);
+    const turned = Math.sin((TAU * sinceHome) / headingPeriod + headingPhase) - Math.sin(headingPhase);
+
+    // Now and then it turns in depth and back: edge-on it is only a sliver wide.
+    const sinceTurn = (((sinceHome + narrowLead) % narrowEvery) + narrowEvery) % narrowEvery;
+    const turning = sinceTurn < narrowSeconds ? Math.sin((Math.PI * sinceTurn) / narrowSeconds) : 0;
+    // And at the ends of a swing it shows a little less of its face.
+    const facing = 1 - 0.1 * now.side * now.side;
+
+    return {
+      ...home,
+      x: home.x + (column + arc * meander + (now.side - atHome.side) * reach) * layout.scale,
+      y: -pad + (trips - trip) * span + (now.drop - atHome.drop) * stall * layout.scale,
+      rotate: home.rotate + (now.pace - atHome.pace) * lean + turned * heading,
+      narrow: facing * (1 - (1 - narrowTo) * turning * turning),
+    };
   };
 }
 
-function tumbles(seed: number, size: number): Sprite['pose'] {
+/**
+ * A flower that keeps coming down from above the layer to below it: straight and even, without hanging
+ * at the sides, turning slowly around itself in its own direction and at its own pace.
+ * Like the leaves it is exactly at its Figma position, at its Figma angle, at HOME_AT.
+ */
+function drops(seed: number, size: number, speedRange: Range): Sprite['pose'] {
   const random = createRandom(seed);
-  const config = MOTION.tumbles;
-  const rockPeriod = random.between(config.rockPeriod);
-  const motion: FallMotion = {
-    seed,
-    speed: random.between(config.speed),
-    meander: random.between(config.meander),
-    meanderPeriod: random.between(config.meanderPeriod),
-    meanderTurn: random.sign(),
-    flutter: 0,
-    flutterPeriod: rockPeriod,
-    respawn: config.respawn,
-  };
+  const config = MOTION.flowers;
+  const speed = random.between(speedRange);
   const spin = random.sign() * random.between(config.spin);
-  const rock = random.between(config.rock);
+  const drift = random.between(config.drift);
+  const driftPeriod = random.between(config.driftPeriod);
+  const driftTurn = random.sign();
 
   return (elapsed, home, layout) => {
-    const fall = fallingPose(elapsed, home, layout, size * layout.scale, motion);
-    return { ...home, x: fall.x, y: fall.y, rotate: home.rotate + spin * fall.fraction + rock * fall.flutter };
+    const sinceHome = elapsed - HOME_AT;
+    const pad = size * layout.scale;
+    const span = layout.height + pad * 2;
+    const trips = sinceHome / (span / (speed * layout.scale)) + (home.y + pad) / span;
+    const trip = Math.floor(trips);
+    const column = trip === 0 ? 0 : tripOffset(seed, trip) * config.respawn;
+
+    // The slow drift leans towards the middle of the screen, as the leaves' arc does.
+    const centre = layout.width / 2;
+    const bias = Math.min(Math.max((centre - home.x) / centre, -1), 1) * MOTION.inwardBias;
+    const phase = driftTurn > 0 ? Math.asin(-bias) : Math.PI - Math.asin(-bias);
+    const drifted = Math.sin((TAU * sinceHome) / driftPeriod + phase) - Math.sin(phase);
+
+    return {
+      ...home,
+      x: home.x + (column + drifted * drift) * layout.scale,
+      y: -pad + (trips - trip) * span,
+      rotate: home.rotate + spin * sinceHome,
+    };
   };
 }
 
-function sways(seed: number, size: number): Sprite['pose'] {
-  const random = createRandom(seed);
-  const config = MOTION.sways;
-  const motion: FallMotion = {
-    seed,
-    speed: random.between(config.speed),
-    meander: random.between(config.meander),
-    meanderPeriod: random.between(config.meanderPeriod),
-    meanderTurn: random.sign(),
-    flutter: random.between(config.flutter),
-    flutterPeriod: random.between(config.flutterPeriod),
-    respawn: config.respawn,
-  };
-  const tilt = random.between(config.tilt);
-
-  return (elapsed, home, layout) => {
-    const fall = fallingPose(elapsed, home, layout, size * layout.scale, motion);
-    return { ...home, x: fall.x, y: fall.y, rotate: home.rotate + fall.flutter * tilt };
-  };
-}
-
-/** Comes down after the others, slows and settles on its Figma position, then stays. */
-function lands(seed: number, order: number): Sprite['pose'] {
+/** A flower that comes down after the others: straight, turning ever more slowly, and stays on its Figma position. */
+function settles(seed: number, order: number): Sprite['pose'] {
   const random = createRandom(seed);
   const config = MOTION.lands;
   const landAt = config.firstAt + order * config.gap;
   const distance = (config.speed * landAt) / config.easePower;
-  const swayAmp = random.between(config.swayAmp);
-  const spin = random.sign() * random.between(config.spin);
+  const spin = random.sign() * random.between(MOTION.flowers.landSpin);
+  const drift = random.sign() * random.between(MOTION.flowers.landDrift);
 
   return (elapsed, home, layout) => {
     const progress = Math.min(Math.max(elapsed / landAt, 0), 1);
     const remaining = Math.pow(1 - progress, config.easePower);
     return {
       ...home,
-      x: home.x + Math.sin(progress * Math.PI * config.swings) * swayAmp * remaining * layout.scale,
+      x: home.x + drift * remaining * layout.scale,
       y: home.y - distance * remaining * layout.scale,
       rotate: home.rotate + spin * remaining,
+    };
+  };
+}
+
+/**
+ * Comes down after the others, swinging like them; the swings die away as it slows,
+ * and it settles on its Figma position, then stays.
+ */
+function lands(seed: number, order: number): Sprite['pose'] {
+  const random = createRandom(seed);
+  const config = MOTION.lands;
+  const landAt = config.firstAt + order * config.gap;
+  const distance = (config.speed * landAt) / config.easePower;
+  const period = random.between(config.period);
+  const reach = random.between(config.reach);
+  const lean = random.between(config.lean);
+  const spin = random.sign() * random.between(config.spin);
+  const phase = random.between([0, TAU]);
+
+  return (elapsed, home, layout) => {
+    const progress = Math.min(Math.max(elapsed / landAt, 0), 1);
+    const remaining = Math.pow(1 - progress, config.easePower);
+    // Counted back from the landing, so the last swing always ends on the spot.
+    const now = swing(Math.min(elapsed, landAt) - landAt, period, phase);
+    const still = swing(0, period, phase);
+    return {
+      ...home,
+      x: home.x + (now.side - still.side) * reach * remaining * layout.scale,
+      y: home.y - distance * remaining * layout.scale,
+      rotate: home.rotate + spin * remaining + (now.pace - still.pace) * lean * remaining,
+      narrow: 1 - 0.14 * now.side * now.side * remaining,
     };
   };
 }
@@ -290,20 +402,19 @@ function bursts(seed: number, order: number): Sprite['pose'] {
 function drifts(seed: number, flake: Flake, size: number): Sprite['pose'] {
   const random = createRandom(seed);
   const config = MOTION.snow;
-  const motion: FallMotion = {
-    seed,
-    speed: config.speedBase + flake.r * config.speedPerRadius,
-    meander: 0,
-    meanderPeriod: 1,
-    meanderTurn: 1,
-    flutter: random.between(config.swayAmp),
-    flutterPeriod: random.between(config.swayPeriod),
-    respawn: config.respawn,
-  };
+  const speed = config.speedBase + flake.r * config.speedPerRadius;
+  const sway = random.between(config.swayAmp);
+  const swayPeriod = random.between(config.swayPeriod);
 
   return (elapsed, home, layout) => {
-    const fall = fallingPose(elapsed, home, layout, size * layout.scale, motion);
-    return { ...home, x: fall.x, y: fall.y };
+    const sinceHome = elapsed - HOME_AT;
+    const pad = size * layout.scale;
+    const span = layout.height + pad * 2;
+    const trips = sinceHome / (span / (speed * layout.scale)) + (home.y + pad) / span;
+    const trip = Math.floor(trips);
+    const column = trip === 0 ? 0 : tripOffset(seed, trip) * config.respawn;
+    const drift = Math.sin((TAU * sinceHome) / swayPeriod);
+    return { ...home, x: home.x + (column + drift * sway) * layout.scale, y: -pad + (trips - trip) * span };
   };
 }
 
@@ -319,10 +430,12 @@ function createImage(asset: AssetName, assetBaseUrl: string | undefined): HTMLIm
 
 function pieceSprite(piece: Piece, index: number, order: number, month: number, assetBaseUrl?: string): Sprite {
   const seed = month * 100 + index;
+  // Whole flowers are heavier than leaves and petals and fall differently.
+  const flower = FLOWERS.test(piece.asset);
   const poses = {
-    tumbles: () => tumbles(seed, piece.size),
-    sways: () => sways(seed, piece.size),
-    lands: () => lands(seed, order),
+    tumbles: () => (flower ? drops(seed, piece.size, MOTION.flowers.speed.tumbles) : floats(seed, piece.size, MOTION.tumbles)),
+    sways: () => (flower ? drops(seed, piece.size, MOTION.flowers.speed.sways) : floats(seed, piece.size, MOTION.sways)),
+    lands: () => (flower ? settles(seed, order) : lands(seed, order)),
     bursts: () => bursts(seed, order),
   };
   return {
@@ -441,7 +554,8 @@ export function mountFallingLeaves(
       // Invisible until decoded; a sprite that arrives after the start fades in instead of jumping in.
       const sinceLoad = sprite.loadedAt === null ? 0 : (performance.now() - sprite.loadedAt) / 1000;
       const loaded = Math.min(sinceLoad / LATE_FADE_SECONDS, 1);
-      sprite.node.style.transform = `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg) scale(${pose.scale})`;
+      const narrow = pose.narrow ?? 1;
+      sprite.node.style.transform = `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg) scale(${pose.scale * narrow}, ${pose.scale})`;
       sprite.node.style.opacity = String(pose.opacity * loaded);
     }
   };

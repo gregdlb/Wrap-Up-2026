@@ -24,7 +24,11 @@
             <div class="progress" id="progress"></div>
             <header class="header">
               <img src="/demo/assets/ui/brevy-logo.svg" width="91.205" height="32" alt="Brevy" />
-              <div class="header__close"><img src="/demo/assets/ui/icon-x.svg" width="18" height="18" alt="" /></div>
+              <div class="header__actions">
+                <!-- SoundButton is mounted here; it keeps its state while the screens change. -->
+                <div id="sound"></div>
+                <div class="header__close"><img src="/demo/assets/ui/icon-x.svg" width="18" height="18" alt="" /></div>
+              </div>
             </header>
 
             <div class="content">
@@ -70,6 +74,7 @@
 
         <div class="readout">
           <p class="readout__title">Variant <strong id="note"></strong></p>
+          <p class="readout__title">Sound button <strong id="sound-state"></strong></p>
           <p class="readout__title">Data passed to the component</p>
           <pre id="json"></pre>
         </div>

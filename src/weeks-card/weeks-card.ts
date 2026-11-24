@@ -53,9 +53,9 @@ const GRID = { x: 19.25, y: 62, size: 18, pitch: 22.5, columns: 8, maxRows: 7, l
 
 /**
  * Seconds from `play()`: the streak fills square by square and is done by 2.0 s.
- * It starts when the last blank sheet lifts off the page, so no square fills unseen.
+ * It starts when the last blank sheet turns see-through on its way up, so no square fills unseen.
  */
-const TIMING = { fill: { at: 0.85, endAt: 2.0, duration: 0.25, maxStagger: 0.04 } };
+const TIMING = { fill: { at: 1.05, endAt: 2.0, duration: 0.25, maxStagger: 0.04 } };
 
 const STYLES = /* css */ `
 .wu-weeks-card__stat {

@@ -1,9 +1,9 @@
 import { createCardShell, element } from '../shared/card';
 import { createController, holdTimeline, type WrapUpController, type WrapUpOptions } from '../shared/controller';
 import { SCREEN_SECONDS } from '../shared/counter';
-import { flipSchedule } from '../shared/flips';
+import { createSheets } from '../shared/flips';
 import { trackImages } from '../shared/images';
-import { addPagesIn, createPages } from '../shared/pages';
+import { addPagesIn, createPages, FRONT_PAGE } from '../shared/pages';
 import { addStickerPop, createSticker } from '../shared/sticker';
 import { ensureStyles } from '../shared/styles';
 
@@ -42,15 +42,15 @@ const MS_PER_DAY = 86_400_000;
 
 /**
  * The calendar flips from 1 January to the date: sheets turn up over the hinge under the month stripe,
- * each one faster than the one before. Seconds are counted from `play()`.
+ * one closely after the other (the motion of a sheet is in `shared/flips`). Seconds are counted from `play()`;
+ * the first sheet lifts while the calendar is still sliding in, the last one is gone before the marker starts.
  */
+/** Height of the month stripe: the sheets are hinged at its bottom edge. */
+const STRIPE_HEIGHT = 52;
+
 const FLIP = {
-  startAt: 0.9,
-  endAt: 2.0,
-  /** A flip never takes longer than this, so one or two flips stay short. */
-  longest: 0.42,
-  /** Each flip takes this share of the time of the one before. */
-  speedUp: 0.85,
+  startAt: 0.75,
+  endAt: 3.05,
   /** At most this many flips. */
   most: 7,
   /** Days right before the date that get a sheet of their own, day after day. */
@@ -59,9 +59,6 @@ const FLIP = {
   daysPerStop: 20,
   /** Days each stop is moved off an even spread, so the numbers do not look like a pattern. */
   uneven: [2, -4, 5, -3],
-  /** Degrees a sheet turns; from `fadeFrom` on it fades, edge-on to the viewer. */
-  angle: 100,
-  fadeFrom: 80,
 };
 
 /**
@@ -69,7 +66,7 @@ const FLIP = {
  * Drawn in a 178.808 x 110.928 box, tilted, centred on the day. Two digits get a wider loop.
  */
 const MARKER = {
-  at: 2.1,
+  at: 3.1,
   duration: 0.7,
   path: [
     ['M', 74.1051, 9.47798],
@@ -91,15 +88,10 @@ const MARKER = {
 };
 
 /** The "First visit" sticker: unrotated top left corner in the frame, its tilt, and how far it turns popping in. */
-const STICKER = { at: 2.8, duration: 0.4, x: 233.48, y: 50.5, tilt: 6, turn: 18, shadow: { y: 12, blur: 20 } };
+const STICKER = { at: 3.8, duration: 0.4, x: 233.48, y: 50.5, tilt: 6, turn: 18, shadow: { y: 12, blur: 20 } };
 
-/** Text positions are on the front page (214 x 236); the sheet that flips is the page below the 52 px stripe. */
+/** Text positions are on the front page (214 x 236); a sheet that flips is the page below the 52 px stripe. */
 const STYLES = /* css */ `
-.wu-first-visit-card .wu-page--front {
-  perspective: calc(600 * var(--wu-u));
-  perspective-origin: 50% calc(52 * var(--wu-u));
-}
-
 .wu-first-visit-card__stripe {
   position: absolute;
   left: 0;
@@ -142,43 +134,17 @@ const STYLES = /* css */ `
   font-weight: 500;
 }
 
-/* The sheet being turned: hinged on its top edge, right under the stripe. */
-.wu-first-visit-card__leaf {
-  position: absolute;
-  left: 0;
-  top: calc(52 * var(--wu-u));
-  width: 100%;
-  bottom: 0;
-  overflow: hidden;
-  border-radius: 0 0 calc(14 * var(--wu-u)) calc(14 * var(--wu-u));
-  background: var(--beige-50, #fefdfc);
-  transform-origin: 50% 0;
-  transform: rotateX(calc(var(--wu-flip, 0) * 1deg));
+/* The sheets that turn are hinged right under the stripe, so only their bottom corners are round. */
+.wu-first-visit-card .wu-sheets {
+  --wu-sheet-radius: 0 0 calc(14 * var(--wu-u)) calc(14 * var(--wu-u));
 }
 
-.wu-first-visit-card__leaf .wu-first-visit-card__day {
+.wu-sheet .wu-first-visit-card__day {
   top: calc(31 * var(--wu-u));
 }
 
-.wu-first-visit-card__leaf .wu-first-visit-card__weekday {
+.wu-sheet .wu-first-visit-card__weekday {
   top: calc(142 * var(--wu-u));
-}
-
-/* Light falls off the sheet as it lifts. */
-.wu-first-visit-card__leaf-shade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(3, 26, 13, 0.05), rgba(3, 26, 13, 0.3));
-}
-
-/* And the lifted sheet shades the one below, strongest at the hinge. */
-.wu-first-visit-card__hinge-shadow {
-  position: absolute;
-  left: 0;
-  top: calc(52 * var(--wu-u));
-  width: 100%;
-  height: calc(70 * var(--wu-u));
-  background: linear-gradient(to bottom, rgba(3, 26, 13, 0.16), rgba(3, 26, 13, 0));
 }
 
 .wu-first-visit-card__marker {
@@ -314,9 +280,6 @@ export function mountFirstVisitCard(
     weekday: format(day, { weekday: 'long' }),
   }));
   const last = sheets.length - 1;
-  // One or two flips stay short instead of filling the whole window.
-  const schedule = flipSchedule(last, Math.min(FLIP.endAt - FLIP.startAt, last * FLIP.longest), FLIP.speedUp);
-  const flipSeconds = schedule.reduce((all, flip) => all + flip.duration, 0);
 
   ensureStyles('first-visit-card', STYLES);
   const shell = createCardShell(el, {
@@ -330,50 +293,26 @@ export function mountFirstVisitCard(
 
   const text = (name: string) => element(`wu-first-visit-card__text wu-first-visit-card__${name}`);
   const month = text('month');
-  const under = { day: text('day'), weekday: text('weekday') };
-  const turning = { day: text('day'), weekday: text('weekday') };
+  const printed = (sheet: Sheet) => {
+    const day = text('day');
+    const weekday = text('weekday');
+    day.textContent = sheet.day;
+    weekday.textContent = sheet.weekday;
+    return [day, weekday];
+  };
   const { marker, line } = createMarker(sheets[last]!.day.length);
-  const hingeShadow = element('wu-first-visit-card__hinge-shadow');
-  const leaf = element('wu-first-visit-card__leaf');
-  const leafShade = element('wu-first-visit-card__leaf-shade');
-  leaf.append(turning.day, turning.weekday, leafShade);
-  pages.front.append(month, marker, under.day, under.weekday, hingeShadow, leaf);
+  // The date itself is printed on the page; every date before it is a sheet lying on top, 1 January uppermost.
+  const stack = createSheets({ count: last, hinge: STRIPE_HEIGHT, height: FRONT_PAGE.height, window: FLIP.endAt - FLIP.startAt });
+  stack.sheets.forEach((sheet, index) => sheet.append(...printed(sheets[index]!)));
+  pages.front.append(month, marker, ...printed(sheets[last]!), stack.node);
 
   const sticker = createSticker({ text: labels.sticker, ...STICKER, assetBaseUrl });
   shell.stage.append(sticker);
 
-  const write = (node: HTMLElement, value: string) => {
-    if (node.textContent !== value) node.textContent = value;
-  };
-
-  /**
-   * Shows the calendar `seconds` into the flipping: which sheet is turning and how far,
-   * what is printed on it and on the sheet below, and the month on the stripe.
-   */
+  /** Shows the calendar `seconds` into the flipping: every sheet's pose, and the month of the sheet on top. */
   const showFlip = (seconds: number) => {
-    const index = schedule.findIndex((flip) => seconds < flip.at + flip.duration);
-    const resting = seconds <= 0 || index < 0;
-    const below = sheets[resting ? (seconds <= 0 ? 0 : last) : index + 1]!;
-    write(under.day, below.day);
-    write(under.weekday, below.weekday);
-
-    if (resting) {
-      write(month, below.month);
-      leaf.style.opacity = '0';
-      hingeShadow.style.opacity = '0';
-      return;
-    }
-    const flip = schedule[index]!;
-    const top = sheets[index]!;
-    const progress = Math.min(Math.max((seconds - flip.at) / flip.duration, 0), 1);
-    const angle = FLIP.angle * Math.pow(progress, 1.6);
-    write(turning.day, top.day);
-    write(turning.weekday, top.weekday);
-    write(month, progress < 0.5 ? top.month : below.month);
-    leaf.style.setProperty('--wu-flip', angle.toFixed(2));
-    leaf.style.opacity = String(Math.min(Math.max((FLIP.angle - angle) / (FLIP.angle - FLIP.fadeFrom), 0), 1));
-    leafShade.style.opacity = String(Math.sin((Math.min(angle, 90) * Math.PI) / 180));
-    hingeShadow.style.opacity = String(Math.sin(progress * Math.PI));
+    const onTop = sheets[stack.show(seconds)]!.month;
+    if (month.textContent !== onTop) month.textContent = onTop;
   };
 
   // GSAP writes through the setter on every render, so the sheets also follow seek() and rewinds.
@@ -391,7 +330,7 @@ export function mountFirstVisitCard(
   const timeline = holdTimeline(SCREEN_SECONDS);
   addPagesIn(timeline, pages);
   timeline
-    .fromTo(flipping, { seconds: 0 }, { seconds: flipSeconds, duration: flipSeconds, ease: 'none' }, FLIP.startAt)
+    .fromTo(flipping, { seconds: 0 }, { seconds: stack.seconds, duration: stack.seconds, ease: 'none' }, FLIP.startAt)
     .fromTo(marker, { opacity: 0 }, { opacity: 1, duration: 0.01 }, MARKER.at)
     .fromTo(
       line,

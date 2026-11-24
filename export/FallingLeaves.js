@@ -288,29 +288,47 @@ var STYLES = `
   user-select: none;
 }
 `;
+var FLOWERS = /snowdrop|lilac-floret|daisy/;
 var HOME_AT = 3;
 var FADE_IN = 0.6;
 var TAU = Math.PI * 2;
 var MOTION = {
   tumbles: {
-    speed: [60, 84],
-    spin: [120, 220],
-    rock: [8, 16],
-    rockPeriod: [2.8, 3.8],
-    meander: [36, 64],
+    speed: [50, 70],
+    period: [2.5, 3.6],
+    reach: [22, 38],
+    lean: [20, 32],
+    stall: [0.75, 1],
+    narrow: { every: [3.6, 5.6], seconds: [0.8, 1.15], to: [0.12, 0.35] },
+    heading: [10, 22],
+    headingPeriod: [8, 12],
+    meander: [16, 30],
     meanderPeriod: [10, 14],
     respawn: 40
   },
   sways: {
-    speed: [48, 60],
-    tilt: [14, 22],
-    flutter: [6, 10],
-    flutterPeriod: [3.2, 4.2],
-    meander: [30, 50],
-    meanderPeriod: [7, 9],
+    speed: [40, 54],
+    period: [3, 4.2],
+    reach: [16, 28],
+    lean: [14, 24],
+    stall: [0.65, 0.9],
+    narrow: { every: [5.5, 8.5], seconds: [0.9, 1.3], to: [0.3, 0.55] },
+    heading: [6, 14],
+    headingPeriod: [9, 13],
+    meander: [12, 24],
+    meanderPeriod: [8, 11],
     respawn: 40
   },
-  lands: { firstAt: 4.4, gap: 0.8, speed: 70, easePower: 1.6, swayAmp: [14, 22], swings: 1.5, spin: [50, 90] },
+  lands: { firstAt: 4.4, gap: 0.8, speed: 70, easePower: 1.6, period: [1.9, 2.6], reach: [18, 30], lean: [18, 28], spin: [20, 45] },
+  flowers: {
+    speed: { tumbles: [58, 78], sways: [48, 62] },
+    spin: [14, 38],
+    drift: [5, 12],
+    driftPeriod: [9, 14],
+    respawn: 40,
+    landSpin: [50, 120],
+    landDrift: [4, 9]
+  },
   bursts: { period: [4.8, 5.6], firstLead: 0.6, lead: 0.45, grow: 0.45, appear: 0.25, holdUntil: 0.55, goneBy: 0.8 },
   snow: { speedBase: 14, speedPerRadius: 8, swayAmp: [3, 8], swayPeriod: [4, 7], respawn: 30, softSize: 2.2 },
   inwardBias: 0.7
@@ -333,65 +351,99 @@ function tripOffset(seed, trip) {
   const value = Math.sin(seed * 12.9898 + trip * 78.233) * 43758.5453;
   return (value - Math.floor(value)) * 2 - 1;
 }
-function fallingPose(elapsed, home, layout, pad, motion) {
-  const sinceHome = elapsed - HOME_AT;
-  const span = layout.height + pad * 2;
-  const duration = span / (motion.speed * layout.scale);
-  const homeFraction = (home.y + pad) / span;
-  const trips = sinceHome / duration + homeFraction;
-  const trip = Math.floor(trips);
-  const fraction = trips - trip;
-  const column = trip === 0 ? 0 : tripOffset(motion.seed, trip) * motion.respawn;
-  const centre = layout.width / 2;
-  const bias = Math.min(Math.max((centre - home.x) / centre, -1), 1) * MOTION.inwardBias;
-  const phase = motion.meanderTurn > 0 ? Math.asin(-bias) : Math.PI - Math.asin(-bias);
-  const arc = motion.meander ? Math.sin(TAU * sinceHome / motion.meanderPeriod + phase) - Math.sin(phase) : 0;
-  const flutter = Math.sin(TAU * sinceHome / motion.flutterPeriod);
-  return {
-    fraction: fraction - homeFraction,
-    flutter,
-    x: home.x + (column + arc * motion.meander + flutter * motion.flutter) * layout.scale,
-    y: -pad + fraction * span
+function swing(time, period, phase) {
+  const angle = TAU * time / period + phase;
+  return { side: Math.sin(angle), pace: Math.cos(angle), drop: Math.sin(2 * angle) };
+}
+function floats(seed, size, ranges) {
+  const random = createRandom(seed);
+  const speed = random.between(ranges.speed);
+  const period = random.between(ranges.period);
+  const reach = random.between(ranges.reach);
+  const lean = random.between(ranges.lean);
+  const stall = random.between(ranges.stall) * speed * period / (2 * TAU);
+  const phase = random.between([0, TAU]);
+  const heading = random.between(ranges.heading);
+  const headingPeriod = random.between(ranges.headingPeriod);
+  const headingPhase = random.between([0, TAU]);
+  const meander = random.between(ranges.meander);
+  const meanderPeriod = random.between(ranges.meanderPeriod);
+  const meanderTurn = random.sign();
+  const narrowEvery = random.between(ranges.narrow.every);
+  const narrowSeconds = random.between(ranges.narrow.seconds);
+  const narrowTo = random.between(ranges.narrow.to);
+  const narrowLead = random.between([narrowSeconds + 0.3, narrowEvery - 0.3]);
+  const atHome = swing(0, period, phase);
+  return (elapsed, home, layout) => {
+    const sinceHome = elapsed - HOME_AT;
+    const now = swing(sinceHome, period, phase);
+    const pad = (size + stall + 12) * layout.scale;
+    const span = layout.height + pad * 2;
+    const duration = span / (speed * layout.scale);
+    const homeFraction = (home.y + pad) / span;
+    const trips = sinceHome / duration + homeFraction;
+    const trip = Math.floor(trips);
+    const column = trip === 0 ? 0 : tripOffset(seed, trip) * ranges.respawn;
+    const centre = layout.width / 2;
+    const bias = Math.min(Math.max((centre - home.x) / centre, -1), 1) * MOTION.inwardBias;
+    const arcPhase = meanderTurn > 0 ? Math.asin(-bias) : Math.PI - Math.asin(-bias);
+    const arc = Math.sin(TAU * sinceHome / meanderPeriod + arcPhase) - Math.sin(arcPhase);
+    const turned = Math.sin(TAU * sinceHome / headingPeriod + headingPhase) - Math.sin(headingPhase);
+    const sinceTurn = ((sinceHome + narrowLead) % narrowEvery + narrowEvery) % narrowEvery;
+    const turning = sinceTurn < narrowSeconds ? Math.sin(Math.PI * sinceTurn / narrowSeconds) : 0;
+    const facing = 1 - 0.1 * now.side * now.side;
+    return {
+      ...home,
+      x: home.x + (column + arc * meander + (now.side - atHome.side) * reach) * layout.scale,
+      y: -pad + (trips - trip) * span + (now.drop - atHome.drop) * stall * layout.scale,
+      rotate: home.rotate + (now.pace - atHome.pace) * lean + turned * heading,
+      narrow: facing * (1 - (1 - narrowTo) * turning * turning)
+    };
   };
 }
-function tumbles(seed, size) {
+function drops(seed, size, speedRange) {
   const random = createRandom(seed);
-  const config = MOTION.tumbles;
-  const rockPeriod = random.between(config.rockPeriod);
-  const motion = {
-    seed,
-    speed: random.between(config.speed),
-    meander: random.between(config.meander),
-    meanderPeriod: random.between(config.meanderPeriod),
-    meanderTurn: random.sign(),
-    flutter: 0,
-    flutterPeriod: rockPeriod,
-    respawn: config.respawn
-  };
+  const config = MOTION.flowers;
+  const speed = random.between(speedRange);
   const spin = random.sign() * random.between(config.spin);
-  const rock = random.between(config.rock);
+  const drift = random.between(config.drift);
+  const driftPeriod = random.between(config.driftPeriod);
+  const driftTurn = random.sign();
   return (elapsed, home, layout) => {
-    const fall = fallingPose(elapsed, home, layout, size * layout.scale, motion);
-    return { ...home, x: fall.x, y: fall.y, rotate: home.rotate + spin * fall.fraction + rock * fall.flutter };
+    const sinceHome = elapsed - HOME_AT;
+    const pad = size * layout.scale;
+    const span = layout.height + pad * 2;
+    const trips = sinceHome / (span / (speed * layout.scale)) + (home.y + pad) / span;
+    const trip = Math.floor(trips);
+    const column = trip === 0 ? 0 : tripOffset(seed, trip) * config.respawn;
+    const centre = layout.width / 2;
+    const bias = Math.min(Math.max((centre - home.x) / centre, -1), 1) * MOTION.inwardBias;
+    const phase = driftTurn > 0 ? Math.asin(-bias) : Math.PI - Math.asin(-bias);
+    const drifted = Math.sin(TAU * sinceHome / driftPeriod + phase) - Math.sin(phase);
+    return {
+      ...home,
+      x: home.x + (column + drifted * drift) * layout.scale,
+      y: -pad + (trips - trip) * span,
+      rotate: home.rotate + spin * sinceHome
+    };
   };
 }
-function sways(seed, size) {
+function settles(seed, order) {
   const random = createRandom(seed);
-  const config = MOTION.sways;
-  const motion = {
-    seed,
-    speed: random.between(config.speed),
-    meander: random.between(config.meander),
-    meanderPeriod: random.between(config.meanderPeriod),
-    meanderTurn: random.sign(),
-    flutter: random.between(config.flutter),
-    flutterPeriod: random.between(config.flutterPeriod),
-    respawn: config.respawn
-  };
-  const tilt = random.between(config.tilt);
+  const config = MOTION.lands;
+  const landAt = config.firstAt + order * config.gap;
+  const distance = config.speed * landAt / config.easePower;
+  const spin = random.sign() * random.between(MOTION.flowers.landSpin);
+  const drift = random.sign() * random.between(MOTION.flowers.landDrift);
   return (elapsed, home, layout) => {
-    const fall = fallingPose(elapsed, home, layout, size * layout.scale, motion);
-    return { ...home, x: fall.x, y: fall.y, rotate: home.rotate + fall.flutter * tilt };
+    const progress = Math.min(Math.max(elapsed / landAt, 0), 1);
+    const remaining = Math.pow(1 - progress, config.easePower);
+    return {
+      ...home,
+      x: home.x + drift * remaining * layout.scale,
+      y: home.y - distance * remaining * layout.scale,
+      rotate: home.rotate + spin * remaining
+    };
   };
 }
 function lands(seed, order) {
@@ -399,16 +451,22 @@ function lands(seed, order) {
   const config = MOTION.lands;
   const landAt = config.firstAt + order * config.gap;
   const distance = config.speed * landAt / config.easePower;
-  const swayAmp = random.between(config.swayAmp);
+  const period = random.between(config.period);
+  const reach = random.between(config.reach);
+  const lean = random.between(config.lean);
   const spin = random.sign() * random.between(config.spin);
+  const phase = random.between([0, TAU]);
   return (elapsed, home, layout) => {
     const progress = Math.min(Math.max(elapsed / landAt, 0), 1);
     const remaining = Math.pow(1 - progress, config.easePower);
+    const now = swing(Math.min(elapsed, landAt) - landAt, period, phase);
+    const still = swing(0, period, phase);
     return {
       ...home,
-      x: home.x + Math.sin(progress * Math.PI * config.swings) * swayAmp * remaining * layout.scale,
+      x: home.x + (now.side - still.side) * reach * remaining * layout.scale,
       y: home.y - distance * remaining * layout.scale,
-      rotate: home.rotate + spin * remaining
+      rotate: home.rotate + spin * remaining + (now.pace - still.pace) * lean * remaining,
+      narrow: 1 - 0.14 * now.side * now.side * remaining
     };
   };
 }
@@ -431,19 +489,18 @@ function bursts(seed, order) {
 function drifts(seed, flake, size) {
   const random = createRandom(seed);
   const config = MOTION.snow;
-  const motion = {
-    seed,
-    speed: config.speedBase + flake.r * config.speedPerRadius,
-    meander: 0,
-    meanderPeriod: 1,
-    meanderTurn: 1,
-    flutter: random.between(config.swayAmp),
-    flutterPeriod: random.between(config.swayPeriod),
-    respawn: config.respawn
-  };
+  const speed = config.speedBase + flake.r * config.speedPerRadius;
+  const sway = random.between(config.swayAmp);
+  const swayPeriod = random.between(config.swayPeriod);
   return (elapsed, home, layout) => {
-    const fall = fallingPose(elapsed, home, layout, size * layout.scale, motion);
-    return { ...home, x: fall.x, y: fall.y };
+    const sinceHome = elapsed - HOME_AT;
+    const pad = size * layout.scale;
+    const span = layout.height + pad * 2;
+    const trips = sinceHome / (span / (speed * layout.scale)) + (home.y + pad) / span;
+    const trip = Math.floor(trips);
+    const column = trip === 0 ? 0 : tripOffset(seed, trip) * config.respawn;
+    const drift = Math.sin(TAU * sinceHome / swayPeriod);
+    return { ...home, x: home.x + (column + drift * sway) * layout.scale, y: -pad + (trips - trip) * span };
   };
 }
 function createImage(asset, assetBaseUrl) {
@@ -457,10 +514,11 @@ function createImage(asset, assetBaseUrl) {
 }
 function pieceSprite(piece, index, order, month, assetBaseUrl) {
   const seed = month * 100 + index;
+  const flower = FLOWERS.test(piece.asset);
   const poses = {
-    tumbles: () => tumbles(seed, piece.size),
-    sways: () => sways(seed, piece.size),
-    lands: () => lands(seed, order),
+    tumbles: () => flower ? drops(seed, piece.size, MOTION.flowers.speed.tumbles) : floats(seed, piece.size, MOTION.tumbles),
+    sways: () => flower ? drops(seed, piece.size, MOTION.flowers.speed.sways) : floats(seed, piece.size, MOTION.sways),
+    lands: () => flower ? settles(seed, order) : lands(seed, order),
     bursts: () => bursts(seed, order)
   };
   return {
@@ -546,7 +604,8 @@ function mountFallingLeaves(layers, data, options = {}) {
       const pose = reducedMotion ? home : sprite.pose(elapsed, home, layout);
       const sinceLoad = sprite.loadedAt === null ? 0 : (performance.now() - sprite.loadedAt) / 1000;
       const loaded = Math.min(sinceLoad / LATE_FADE_SECONDS, 1);
-      sprite.node.style.transform = `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg) scale(${pose.scale})`;
+      const narrow = pose.narrow ?? 1;
+      sprite.node.style.transform = `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg) scale(${pose.scale * narrow}, ${pose.scale})`;
       sprite.node.style.opacity = String(pose.opacity * loaded);
     }
   };

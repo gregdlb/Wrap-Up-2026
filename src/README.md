@@ -16,6 +16,7 @@ Animated, data-driven pieces of the Brevy "Wrap Up 2026" story. Copy this folder
 | `MoneyRain.js` | 09 Pay | bills and coins that burst out when the amount is revealed |
 | `TopCaregiverCard.js` | 10 Top caregiver | the rank chart with the "You" pin and the "Top 10%" counter |
 | `ThankYouCard.js` | 11 Thank you + share | the four summary tiles, and the image to share |
+| `SoundButton.js` | header | the mute / unmute button next to Close; shows and reports the state, the music is the app's |
 | `WrapUpAssets.js` | all | `preloadWrapUpAssets()`: fetches the components' images ahead of the story |
 | `WrapUpText.js` | all | `keepTogether()`: keeps a number and its unit on one line in the app's own texts |
 | `*.d.ts` | | TypeScript declarations, one per component, picked up automatically next to the JS file |
@@ -81,13 +82,14 @@ card.play();      // when the screen is in; all timings count from here
 
   It fetches and decodes the sticker heart and the sprites of those months, and resolves when they are in (it
   never rejects). The second argument takes `{ assetBaseUrl }`, as the components do.
-- **Page flip.** BusiestMonthCard, PersonalityCard and WeeksCard open like the calendar of FirstVisitCard: while
-  the page stack slides in, three blank sheets turn up over the top edge (0.5–1.0 s, each faster than the one
-  before) and uncover the page with the data.
-- **Counter with a unit.** Where a word stands next to a counting number ("visits", "weeks"), it follows the
-  current number as it counts instead of waiting at its final place: 8 px behind the big number in
-  BusiestMonthCard and WeeksCard, a word space behind it in the badges of CaredForCard. The digits are tabular,
-  so the word only moves when a digit is added.
+- **Page flip.** Wherever sheets turn (the calendar of FirstVisitCard, and the three blank sheets that
+  BusiestMonthCard, PersonalityCard and WeeksCard open with at 0.2–1.35 s) they move like the calendar in the
+  reference video (`reference/Demo_m1.mp4`), a little slower and softer: a sheet is hinged at its top edge;
+  its free edge first swings out towards the viewer, so for a moment the sheet is about 1.09x its size; then
+  it folds up onto the hinge, turning see-through, and is gone after 0.55 s. The next sheet starts before the
+  one above it is gone, but never more than two are in the air; a lifted sheet casts a soft shadow. While it
+  swings out a sheet reaches up to 22 px below the card and about 30 px past its sides (19 px while it is
+  still solid), so leave the card's container unclipped (`overflow: visible`).
 - **Text.** Every text a component draws stays on one line; nothing wraps inside a card. A number and its unit
   are joined with a no-break space ("5:48 AM", "214 visits", "42 full days", "7h 20m", "March 4"), also on
   stickers, badges and the share image, so they stay together wherever the text is reused. Long names are set
@@ -130,15 +132,16 @@ also has `flipDates`, the dates on the sheets as `YYYY-MM-DD`.
 Motion:
 
 1. 0.4–1.0 s: the page stack slides in with 1 January on top.
-2. 0.9–2.0 s: sheets turn up over the hinge under the month stripe, each one faster than the one before, until
-   the date shows. Not every day gets a sheet: at most 7 flips. The dates go forward through the year in uneven
-   steps and no day number appears twice, so every flip shows a new number; the last two sheets before the
-   date are always the two days before it (4 March: 1 Jan → 18 Jan → 27 Jan → 20 Feb → 2 Mar → 3 Mar → 4 Mar).
-   A date early in January gets fewer flips (10 January: 1 → 5 → 8 → 9 → 10). The stripe changes with the
-   sheet. 1 January itself gets one short flip, from 31 December.
-3. 2.1–2.8 s: the marker circle draws itself around the day and ends a little past its start. Its ends are
+2. 0.75–3.05 s: the sheets turn up over the hinge under the month stripe, at an even pace, each one starting
+   before the one above it is gone (see "Page flip" above), until the date shows. Not every day gets a sheet:
+   at most 7 flips, 0.29–0.42 s apart; with fewer flips the date shows earlier (a single flip is done at 1.3 s). The dates go forward through the year in uneven steps and no day number appears twice, so
+   every flip shows a new number; the last two sheets before the date are always the two days before it
+   (4 March: 1 Jan → 18 Jan → 27 Jan → 20 Feb → 2 Mar → 3 Mar → 4 Mar). A date early in January gets fewer
+   flips (10 January: 1 → 5 → 8 → 9 → 10). The stripe shows the month of the sheet on top. 1 January itself
+   gets one flip, from 31 December.
+3. 3.1–3.8 s: the marker circle draws itself around the day and ends a little past its start. Its ends are
    rounded, like a real marker's. It is wider for a two-digit day.
-4. 2.8–3.2 s: the sticker pops in with a small bounce, turning into its tilt.
+4. 3.8–4.2 s: the sticker pops in with a small bounce, turning into its tilt.
 
 Then the card holds until 6 s. With the system's `prefers-reduced-motion` the date, the circle and the sticker
 are there at once.
@@ -246,9 +249,10 @@ depend on the data only.
 
 ### Motion
 
-Pages slide in at 0.4–1.0 s and three blank sheets flip off the front page at 0.5–1.0 s. Bars and the counter
-are done by 2.5 s, the busiest bar turns `brand-500` by 2.8 s. While the number counts, the unit ("visits")
-stays 8 px behind its last digit and moves with it; the digits are tabular, so it does not jitter.
+Pages slide in at 0.4–1.0 s and three blank sheets flip off the front page at 0.2–1.35 s. Bars and the counter
+start at 1.05 s, when the last sheet is see-through, and are done by 2.5 s; the busiest bar turns `brand-500` by
+2.8 s. While the number counts, the unit ("visits") stays 8 px behind its last digit and moves with it; the
+digits are tabular, so it does not jitter.
 With the system's `prefers-reduced-motion` the card shows its final state at once; `duration` and `onComplete`
 keep the same 6 s.
 
@@ -329,18 +333,37 @@ Each layer fills its element and clips to it, so make both cover the screen. Nei
 
 ### Motion
 
-The way a piece moves comes from its Figma layer name:
+A falling piece comes down like a real leaf, swinging from side to side like a pendulum:
 
-- `(tumbles)`: falls at 60–84 px/s in a wide slow arc, turning slowly and rocking a little.
-- `(sways)`: falls slower, 48–60 px/s, and swings from side to side.
-- `(lands last)`: comes down after the others and stays where Figma places it, by the card. Landed by about 5 s.
+- it slows towards each end of a swing and is fastest through the middle, sideways and in its fall: at the ends
+  it almost hangs in the air, through the middle it drops;
+- it leans into the direction it is travelling, and tips over to the other side as it turns;
+- now and then it turns in depth, so for a moment it is only a sliver wide, then faces the viewer again;
+- every piece has its own tempo (one swing takes 2.5–4.2 s), reach (16–38 px to each side), fall speed and
+  timing, drawn from a seed per piece, so no two move in step and a month looks the same every time.
+
+That is how leaves (September to November) and petals (April, August) fall. Whole flowers are heavier: the
+snowdrops of March, the lilac florets of May and the daisies of June come **straight down at an even speed**,
+without hanging at the sides; they turn slowly around themselves (14–38 degrees a second, each in its own
+direction and at its own pace), drift sideways only slightly and slowly, and never turn in depth.
+
+The kind of motion still comes from the piece's Figma layer name:
+
+- `(tumbles)`: leaves and petals fall at 50–70 px/s with wide swings and a turn in depth every 4–6 s;
+  flowers at 58–78 px/s.
+- `(sways)`: slower: leaves and petals at 40–54 px/s with gentler swings and fewer turns; flowers at
+  48–62 px/s.
+- `(lands last)`: comes down after the others and stays where Figma places it, by the card, landed by about
+  5 s. A leaf or petal swings on the way and the swinging dies away as it slows; a flower comes straight
+  down, turning ever more slowly.
 - `(bursts)`, the July fireworks: opens in place, fades and comes back. It does not fall.
 - Snow drifts straight down with a slight sway, smaller flakes slower.
 
-Speeds are in Figma px and scale with the card.
+Speeds are in Figma px and scale with the card. All of it is computed from the time since `play()` (GSAP is
+only the clock), so `pause()`, `play()` and `seek(t)` never make a piece jump.
 
-About 3 s after `play()` the pieces pass through their Figma positions. With the system's
-`prefers-reduced-motion` nothing moves: every piece rests at its Figma position.
+About 3 s after `play()` the looping pieces pass through their Figma positions, at their Figma angles. With the
+system's `prefers-reduced-motion` nothing moves: every piece rests at its Figma position.
 
 ## PersonalityCard
 
@@ -373,7 +396,7 @@ Frame 360 x 350, at `left: 0; top: 413px` on the Figma screen. The scene behind 
 Values longer than five characters, like "7h 20m", are set one size smaller, as in Figma.
 
 Options: the shared ones. Motion: the page stack slides in at 0.4–1.0 s and three blank sheets flip off the front
-page at 0.5–1.0 s; the value counts at 0.8–1.8 s, the chip pops in last, at 1.8–2.0 s.
+page at 0.2–1.35 s; the value counts at 1.05–1.8 s, the chip pops in last, at 1.8–2.0 s.
 
 ## WeeksCard
 
@@ -397,7 +420,7 @@ defaults to the month the last week falls in). The controller also has `streak`,
 indexes.
 
 Motion: the page stack with the grid slides in at 0.4–1.0 s and three blank sheets flip off the front page at
-0.5–1.0 s; as the last one lifts (0.85 s) the streak starts to fill square by square in the brand color and the
+0.2–1.35 s; as the last one turns see-through (1.05 s) the streak starts to fill square by square in the brand color and the
 number counts up with it, done by 2.0 s.
 
 ## CaredForCard
@@ -599,3 +622,46 @@ const file = new File([blob], 'brevy-wrap-up.png', { type: 'image/png' });
 No buttons. It never contains the pay amount: the card does not receive it. `scale` is pixels per Figma px
 (default `3`, which gives 1080 x 1920). The image uses the app's fonts and color tokens; call it when the fonts
 are loaded (it waits for them itself) and at any time after mounting, also mid-animation.
+
+## SoundButton
+
+```js
+import { mountSoundButton } from './SoundButton.js';
+const sound = mountSoundButton(slotLeftOfClose, { muted: player.muted, onChange: (muted) => (player.muted = muted) });
+```
+
+The mute / unmute button of the story's header, Figma "Sound button": 36 x 36 like Close, with an 18 px icon
+(a speaker with waves, or a speaker with an X when muted; 1.75 px round strokes like the X of Close). Put it
+left of Close, 8 px apart (`display: flex; gap: 8px`). It is a real `<button>`: a tap, Enter or Space switches
+the state. Taps do not bubble, so they cannot trigger the story's tap navigation.
+
+It only shows and reports the state. There is no audio in the component: mute and unmute the app's music in
+`onChange`.
+
+| Option | Default | |
+| --- | --- | --- |
+| `muted` | `false` | State to start in. |
+| `tone` | `'light'` | `'light'` on the light screens, `'dark'` on the emerald ones (09, 10, 11): fill and icon color follow the Close button. |
+| `onChange` | none | `(muted: boolean) => void`, called when the user taps the button or `toggle()` is called. |
+| `labels` | `{ mute: 'Mute music' }` | Name for screen readers; the button's pressed state (`aria-pressed`) says whether it is muted. |
+
+| Returns | |
+| --- | --- |
+| `muted` | The current state, `true` when muted. |
+| `setMuted(muted)` | Shows a state **without** calling `onChange`: use it when the app changes the music by itself. |
+| `toggle()` | Switches the state like a tap, and calls `onChange`. |
+| `setTone(tone)` | Switches fill and icon color when the story moves between light and dark screens. |
+| `destroy()` | Removes the button. |
+
+**State across screens.** Mount the button once in a header that stays while the screens change, and call
+`setTone` on each screen: the state is kept. If the header is rebuilt per screen, keep the state in the app and
+pass it back in as `muted`.
+
+| Tone | Fill | Icon |
+| --- | --- | --- |
+| `light` | `beige-50` at 70 % | `--emerald-500` |
+| `dark` | `beige-50` at 15 % | `--beige-50` |
+
+Both with a 6 px background blur, as Close has in Figma. To use other colors, set `--wu-sound-fill` and
+`--wu-sound-icon` on the slot. The button is set in px like the rest of the header; set `--wu-unit` to scale it.
+The element also carries `data-state="muted" | "unmuted"`.

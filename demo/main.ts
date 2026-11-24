@@ -1,5 +1,5 @@
 import gsap from 'gsap';
-import { keepTogether } from '../src';
+import { keepTogether, mountSoundButton } from '../src';
 import {
   createControls,
   type ArcSpec,
@@ -73,6 +73,8 @@ const ui = {
   layerBack: byId('layer-back'),
   layerFront: byId('layer-front'),
   progress: byId('progress'),
+  sound: byId('sound'),
+  soundState: byId('sound-state'),
   tag: byId('tag'),
   headline: byId('headline'),
   body: byId('body'),
@@ -89,6 +91,22 @@ const ui = {
   note: byId('note'),
   json: byId('json'),
 };
+
+/**
+ * The mute button of the header, mounted once: its state stays while the screens change.
+ * The demo plays no music; `onChange` is where the app mutes or unmutes its own.
+ */
+let soundChanges = 0;
+const showSound = (muted: boolean) => {
+  ui.soundState.textContent = `${muted ? 'muted' : 'unmuted'} · onChange called ${soundChanges}×`;
+};
+const sound = mountSoundButton(ui.sound, {
+  onChange: (muted) => {
+    soundChanges += 1;
+    showSound(muted);
+  },
+});
+showSound(sound.muted);
 
 let screen: DemoScreen = SCREENS.find((candidate) => candidate.id === DEFAULT_SCREEN)!;
 let view: ScreenView | null = null;
@@ -321,6 +339,7 @@ function render() {
   ui.title.textContent = screen.label;
   ui.screen.style.background = `linear-gradient(to bottom, ${view.backdrop.background[0]}, ${view.backdrop.background[1]})`;
   ui.screen.classList.toggle('screen--dark', view.backdrop.dark === true);
+  sound.setTone(view.backdrop.dark ? 'dark' : 'light');
   renderArc(view.backdrop.arc);
   renderProgress(screen.step);
   renderCopy(view.copy, view.backdrop);

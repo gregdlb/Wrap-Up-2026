@@ -24,6 +24,7 @@ const components = [
   { name: 'MoneyRain', folder: 'money-rain' },
   { name: 'TopCaregiverCard', folder: 'top-caregiver-card' },
   { name: 'ThankYouCard', folder: 'thank-you-card' },
+  { name: 'SoundButton', folder: 'sound-button' },
   { name: 'WrapUpAssets', folder: 'preload' },
   { name: 'WrapUpText', folder: 'text' },
 ];

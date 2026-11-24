@@ -46,8 +46,9 @@ const DEFAULT_LABELS: BusiestMonthCardLabels = { visit: 'visit', visits: 'visits
 const TIMING = {
   screen: 6,
   pages: { at: 0.4, duration: 0.48, stagger: 0.06, offsetY: 24 },
-  bars: { at: 0.8, endAt: 2.5, stagger: 0.04, minDuration: 0.3 },
-  counter: { at: 0.8, endAt: 2.5 },
+  // Bars and counter start when the last blank sheet has turned see-through.
+  bars: { at: 1.05, endAt: 2.5, stagger: 0.04, minDuration: 0.3 },
+  counter: { at: 1.05, endAt: 2.5 },
   highlight: { at: 2.5, duration: 0.3, overshoot: 1.06 },
 };
 

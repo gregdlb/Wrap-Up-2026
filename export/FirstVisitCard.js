@@ -242,18 +242,6 @@ function createController(config) {
 // src/shared/counter.ts
 var SCREEN_SECONDS = 6;
 
-// src/shared/flips.ts
-function flipSchedule(flips, seconds, speedUp) {
-  const weights = Array.from({ length: flips }, (_, index) => Math.pow(speedUp, index));
-  const sum = weights.reduce((all, weight) => all + weight, 0);
-  let at = 0;
-  return weights.map((weight) => {
-    const flip = { at, duration: seconds * weight / sum };
-    at += flip.duration;
-    return flip;
-  });
-}
-
 // src/shared/pages.ts
 var PAGES_STYLES = `
 .wu-page {
@@ -285,6 +273,7 @@ var PAGES_STYLES = `
   height: calc(236.029 * var(--wu-u));
 }
 `;
+var FRONT_PAGE = { x: 73, y: 60, width: 214, height: 236.029 };
 var PAGES_IN = { at: 0.4, duration: 0.48, stagger: 0.06, offsetY: 24, endAt: 1 };
 function createPages(stage) {
   ensureStyles("pages", PAGES_STYLES);
@@ -296,6 +285,121 @@ function createPages(stage) {
 }
 function addPagesIn(timeline, pages) {
   timeline.fromTo(pages.all, { opacity: 0, "--wu-y": PAGES_IN.offsetY }, { opacity: 1, "--wu-y": 0, duration: PAGES_IN.duration, ease: "power3.out", stagger: PAGES_IN.stagger }, PAGES_IN.at);
+}
+
+// src/shared/flips.ts
+var SHEET_STYLES = `
+/* Everything below the hinge. The camera is close, so a lifted sheet visibly comes towards the viewer. */
+.wu-sheets {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: calc(var(--wu-hinge, 0) * var(--wu-u));
+  perspective: calc(var(--wu-sheet-distance) * var(--wu-u));
+  perspective-origin: 50% 0;
+  pointer-events: none;
+}
+
+.wu-sheet {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--wu-sheet-radius, calc(14 * var(--wu-u)));
+  background: var(--beige-50, #fefdfc);
+  box-shadow: 0 calc(8 * var(--wu-u)) calc(20 * var(--wu-u)) rgba(3, 26, 13, calc(var(--wu-lift, 0) * 0.14));
+  transform-origin: 50% 0;
+  transform: rotateX(calc(var(--wu-flip, 0) * 1deg)) scale(var(--wu-swell, 1));
+  backface-visibility: hidden;
+}
+
+/* A lifted sheet shades the one below it, strongest at the hinge. */
+.wu-sheets__shadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: calc(56 * var(--wu-u));
+  border-radius: var(--wu-sheet-radius, calc(14 * var(--wu-u)));
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  background: linear-gradient(to bottom, rgba(3, 26, 13, 0.09), rgba(3, 26, 13, 0));
+}
+`;
+var SHEET = { seconds: 0.55, distance: 4.5, follow: 0.77, soonest: 0.52, swell: 0.062, swellUntil: 0.36 };
+var TURN = [
+  [0, 0],
+  [0.08, 5.5],
+  [0.16, 14.5],
+  [0.24, 26],
+  [0.32, 34.5],
+  [0.4, 43],
+  [0.48, 52],
+  [0.56, 57.5],
+  [0.64, 64],
+  [0.72, 71.5],
+  [0.8, 78],
+  [0.88, 84],
+  [0.94, 87],
+  [1, 90]
+];
+var PAPER = [
+  [0, 1],
+  [0.23, 1],
+  [0.47, 0.6],
+  [0.78, 0.45],
+  [1, 0]
+];
+function along(table, p) {
+  const next = table.findIndex(([at]) => p <= at);
+  const [fromAt, from] = table[Math.max(next - 1, 0)];
+  const [toAt, to] = table[next];
+  return toAt === fromAt ? to : from + (p - fromAt) / (toAt - fromAt) * (to - from);
+}
+function sheetPose(progress) {
+  const p = Math.min(Math.max(progress, 0), 1);
+  const angle = along(TURN, p);
+  const swell = 1 + (p < SHEET.swellUntil ? SHEET.swell * Math.sin(Math.PI * p / SHEET.swellUntil) : 0);
+  return { angle, opacity: along(PAPER, p), lift: Math.sin(angle * Math.PI / 180), swell };
+}
+function flipStarts(count, window2) {
+  const fitted = count > 1 ? Math.max(window2 - SHEET.seconds, 0) / (count - 1) : 0;
+  const step = Math.max(Math.min(SHEET.seconds * SHEET.follow, fitted), SHEET.seconds * SHEET.soonest);
+  return Array.from({ length: count }, (_, index) => index * step);
+}
+function createSheets(config) {
+  ensureStyles("sheets", SHEET_STYLES);
+  const { count, hinge, height, window: window2 } = config;
+  const starts = flipStarts(count, window2);
+  const node = element("wu-sheets");
+  node.style.setProperty("--wu-hinge", String(hinge));
+  node.style.setProperty("--wu-sheet-distance", String((height - hinge) * SHEET.distance));
+  const shadow = element("wu-sheets__shadow");
+  const sheets = Array.from({ length: count }, () => element("wu-sheet"));
+  node.append(shadow, ...[...sheets].reverse());
+  const show = (seconds) => {
+    let top = count;
+    let lifted = 0;
+    sheets.forEach((sheet, index) => {
+      const progress = (seconds - starts[index]) / SHEET.seconds;
+      if (progress > 0.9999) {
+        sheet.style.visibility = "hidden";
+        return;
+      }
+      const pose = sheetPose(progress);
+      sheet.style.visibility = "";
+      sheet.style.opacity = String(pose.opacity);
+      sheet.style.setProperty("--wu-flip", pose.angle.toFixed(2));
+      sheet.style.setProperty("--wu-lift", pose.lift.toFixed(3));
+      sheet.style.setProperty("--wu-swell", pose.swell.toFixed(4));
+      lifted = Math.max(lifted, pose.lift * pose.opacity);
+      if (top === count && progress < 0.45)
+        top = index;
+    });
+    shadow.style.opacity = String(lifted);
+    return top;
+  };
+  return { node, sheets, seconds: (starts.at(-1) ?? 0) + SHEET.seconds, show };
 }
 
 // src/shared/text.ts
@@ -367,20 +471,17 @@ function addStickerPop(timeline, sticker, at, { duration = 0.35, turn = 0 } = {}
 var DEFAULT_LABELS = { sticker: "First visit" };
 var FRAME = { width: 360, height: 350 };
 var MS_PER_DAY = 86400000;
+var STRIPE_HEIGHT = 52;
 var FLIP = {
-  startAt: 0.9,
-  endAt: 2,
-  longest: 0.42,
-  speedUp: 0.85,
+  startAt: 0.75,
+  endAt: 3.05,
   most: 7,
   daysBefore: 2,
   daysPerStop: 20,
-  uneven: [2, -4, 5, -3],
-  angle: 100,
-  fadeFrom: 80
+  uneven: [2, -4, 5, -3]
 };
 var MARKER = {
-  at: 2.1,
+  at: 3.1,
   duration: 0.7,
   path: [
     ["M", 74.1051, 9.47798],
@@ -398,13 +499,8 @@ var MARKER = {
   y: 128.34,
   stretch: { 1: 1, 2: 1.1445 }
 };
-var STICKER = { at: 2.8, duration: 0.4, x: 233.48, y: 50.5, tilt: 6, turn: 18, shadow: { y: 12, blur: 20 } };
+var STICKER = { at: 3.8, duration: 0.4, x: 233.48, y: 50.5, tilt: 6, turn: 18, shadow: { y: 12, blur: 20 } };
 var STYLES = `
-.wu-first-visit-card .wu-page--front {
-  perspective: calc(600 * var(--wu-u));
-  perspective-origin: 50% calc(52 * var(--wu-u));
-}
-
 .wu-first-visit-card__stripe {
   position: absolute;
   left: 0;
@@ -447,43 +543,17 @@ var STYLES = `
   font-weight: 500;
 }
 
-/* The sheet being turned: hinged on its top edge, right under the stripe. */
-.wu-first-visit-card__leaf {
-  position: absolute;
-  left: 0;
-  top: calc(52 * var(--wu-u));
-  width: 100%;
-  bottom: 0;
-  overflow: hidden;
-  border-radius: 0 0 calc(14 * var(--wu-u)) calc(14 * var(--wu-u));
-  background: var(--beige-50, #fefdfc);
-  transform-origin: 50% 0;
-  transform: rotateX(calc(var(--wu-flip, 0) * 1deg));
+/* The sheets that turn are hinged right under the stripe, so only their bottom corners are round. */
+.wu-first-visit-card .wu-sheets {
+  --wu-sheet-radius: 0 0 calc(14 * var(--wu-u)) calc(14 * var(--wu-u));
 }
 
-.wu-first-visit-card__leaf .wu-first-visit-card__day {
+.wu-sheet .wu-first-visit-card__day {
   top: calc(31 * var(--wu-u));
 }
 
-.wu-first-visit-card__leaf .wu-first-visit-card__weekday {
+.wu-sheet .wu-first-visit-card__weekday {
   top: calc(142 * var(--wu-u));
-}
-
-/* Light falls off the sheet as it lifts. */
-.wu-first-visit-card__leaf-shade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(3, 26, 13, 0.05), rgba(3, 26, 13, 0.3));
-}
-
-/* And the lifted sheet shades the one below, strongest at the hinge. */
-.wu-first-visit-card__hinge-shadow {
-  position: absolute;
-  left: 0;
-  top: calc(52 * var(--wu-u));
-  width: 100%;
-  height: calc(70 * var(--wu-u));
-  background: linear-gradient(to bottom, rgba(3, 26, 13, 0.16), rgba(3, 26, 13, 0));
 }
 
 .wu-first-visit-card__marker {
@@ -585,8 +655,6 @@ function mountFirstVisitCard(el, data, options = {}) {
     weekday: format(day, { weekday: "long" })
   }));
   const last = sheets.length - 1;
-  const schedule = flipSchedule(last, Math.min(FLIP.endAt - FLIP.startAt, last * FLIP.longest), FLIP.speedUp);
-  const flipSeconds = schedule.reduce((all, flip) => all + flip.duration, 0);
   ensureStyles("first-visit-card", STYLES);
   const shell = createCardShell(el, {
     className: "wu-first-visit-card",
@@ -598,43 +666,23 @@ function mountFirstVisitCard(el, data, options = {}) {
   pages.all.forEach((page) => page.append(element("wu-first-visit-card__stripe")));
   const text = (name) => element(`wu-first-visit-card__text wu-first-visit-card__${name}`);
   const month = text("month");
-  const under = { day: text("day"), weekday: text("weekday") };
-  const turning = { day: text("day"), weekday: text("weekday") };
+  const printed = (sheet) => {
+    const day = text("day");
+    const weekday = text("weekday");
+    day.textContent = sheet.day;
+    weekday.textContent = sheet.weekday;
+    return [day, weekday];
+  };
   const { marker, line } = createMarker(sheets[last].day.length);
-  const hingeShadow = element("wu-first-visit-card__hinge-shadow");
-  const leaf = element("wu-first-visit-card__leaf");
-  const leafShade = element("wu-first-visit-card__leaf-shade");
-  leaf.append(turning.day, turning.weekday, leafShade);
-  pages.front.append(month, marker, under.day, under.weekday, hingeShadow, leaf);
+  const stack = createSheets({ count: last, hinge: STRIPE_HEIGHT, height: FRONT_PAGE.height, window: FLIP.endAt - FLIP.startAt });
+  stack.sheets.forEach((sheet, index) => sheet.append(...printed(sheets[index])));
+  pages.front.append(month, marker, ...printed(sheets[last]), stack.node);
   const sticker = createSticker({ text: labels.sticker, ...STICKER, assetBaseUrl });
   shell.stage.append(sticker);
-  const write = (node, value) => {
-    if (node.textContent !== value)
-      node.textContent = value;
-  };
   const showFlip = (seconds) => {
-    const index = schedule.findIndex((flip) => seconds < flip.at + flip.duration);
-    const resting = seconds <= 0 || index < 0;
-    const below = sheets[resting ? seconds <= 0 ? 0 : last : index + 1];
-    write(under.day, below.day);
-    write(under.weekday, below.weekday);
-    if (resting) {
-      write(month, below.month);
-      leaf.style.opacity = "0";
-      hingeShadow.style.opacity = "0";
-      return;
-    }
-    const flip = schedule[index];
-    const top = sheets[index];
-    const progress = Math.min(Math.max((seconds - flip.at) / flip.duration, 0), 1);
-    const angle = FLIP.angle * Math.pow(progress, 1.6);
-    write(turning.day, top.day);
-    write(turning.weekday, top.weekday);
-    write(month, progress < 0.5 ? top.month : below.month);
-    leaf.style.setProperty("--wu-flip", angle.toFixed(2));
-    leaf.style.opacity = String(Math.min(Math.max((FLIP.angle - angle) / (FLIP.angle - FLIP.fadeFrom), 0), 1));
-    leafShade.style.opacity = String(Math.sin(Math.min(angle, 90) * Math.PI / 180));
-    hingeShadow.style.opacity = String(Math.sin(progress * Math.PI));
+    const onTop = sheets[stack.show(seconds)].month;
+    if (month.textContent !== onTop)
+      month.textContent = onTop;
   };
   let flipped = 0;
   const flipping = {
@@ -648,7 +696,7 @@ function mountFirstVisitCard(el, data, options = {}) {
   };
   const timeline = holdTimeline(SCREEN_SECONDS);
   addPagesIn(timeline, pages);
-  timeline.fromTo(flipping, { seconds: 0 }, { seconds: flipSeconds, duration: flipSeconds, ease: "none" }, FLIP.startAt).fromTo(marker, { opacity: 0 }, { opacity: 1, duration: 0.01 }, MARKER.at).fromTo(line, { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: MARKER.duration, ease: "power1.inOut" }, MARKER.at);
+  timeline.fromTo(flipping, { seconds: 0 }, { seconds: stack.seconds, duration: stack.seconds, ease: "none" }, FLIP.startAt).fromTo(marker, { opacity: 0 }, { opacity: 1, duration: 0.01 }, MARKER.at).fromTo(line, { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: MARKER.duration, ease: "power1.inOut" }, MARKER.at);
   addStickerPop(timeline, sticker, STICKER.at, { duration: STICKER.duration, turn: STICKER.turn });
   const controller = createController({
     timeline,

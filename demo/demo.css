@@ -128,11 +128,21 @@ body {
   justify-content: space-between;
 }
 
+/* Sound button and Close, 8 px apart, as in the Figma header. */
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Close as in Figma: beige-50 at 70 %, blurred behind; the sound button has the same fill. */
 .header__close {
   width: 36px;
   height: 36px;
   border-radius: 18px;
-  background: #fefdfc;
+  background: rgba(254, 253, 252, 0.7);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,7 +220,7 @@ body {
 }
 
 .screen--dark .header__close {
-  background: rgba(254, 253, 252, 0.14);
+  background: rgba(254, 253, 252, 0.15);
 }
 
 .screen--dark .progress__segment {

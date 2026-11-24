@@ -61,8 +61,8 @@ const TYPES_WITH_CHECK = ['early_bird', 'night_owl'];
 /** Values longer than "11:42" are set one size smaller, like "7h 20m" in Figma. */
 const VALUE_SIZES = { regular: { size: 64, line: 83, maxLength: 5 }, long: { size: 52, line: 68 } };
 
-/** Seconds from `play()`: the value counts at 0.8–1.8, the chip pops in last, at 1.8–2.0. */
-const TIMING = { value: { at: 0.8, duration: 1.0 }, chip: { at: 1.8, duration: 0.2 } };
+/** Seconds from `play()`: the value counts at 1.05–1.8, once the last blank sheet is see-through; the chip pops in last, at 1.8–2.0. */
+const TIMING = { value: { at: 1.05, duration: 0.75 }, chip: { at: 1.8, duration: 0.2 } };
 
 const STYLES = /* css */ `
 .wu-personality-card__line {
