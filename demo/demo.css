@@ -367,7 +367,13 @@ body {
   flex: none;
 }
 
-/* Arch card with the door of screen 03, the frame of the animator's MP4. */
+/* The animator's video, e.g. the door of screen 03. Its background is transparent. */
+.demo-video {
+  display: block;
+  background: none;
+}
+
+/* Arch card of screen 08, the frame of the animator's MP4. */
 .demo-arch {
   position: relative;
   width: 210px;

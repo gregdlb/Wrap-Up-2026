@@ -1,6 +1,6 @@
 import { createCardShell, element, place } from '../shared/card';
 import { createController, holdTimeline, type WrapUpController, type WrapUpOptions } from '../shared/controller';
-import { addCounter, SCREEN_SECONDS } from '../shared/counter';
+import { addCounter } from '../shared/counter';
 import { trackImages } from '../shared/images';
 import { PAGES_IN } from '../shared/pages';
 import { addStickerPop, createSticker } from '../shared/sticker';
@@ -43,6 +43,12 @@ const STICKER = { x: 37.9, y: 295.87, tilt: 6 };
 
 /** Seconds from `play()`: the plaque comes in with the cards, counts at 1.0–2.5, the sticker pops in at 2.5. */
 const TIMING = { counter: { at: 1.0, duration: 1.5 }, sticker: 2.5 };
+
+/**
+ * This screen is longer than the others: the animator's video of the door plays to its end,
+ * then its last frame, the open door, stays for a moment. `duration` is the sum.
+ */
+const SCREEN = { video: 7, hold: 1.5 };
 
 /** Number size by the count of characters, so that four and more digits still fit the 90 px wide plaque. */
 const NUMBER_SIZES = [36, 36, 36, 36, 30, 26, 22];
@@ -116,7 +122,7 @@ export function mountVisitsCount(
   plaque.append(element('wu-visits-count__title', labels.visits), number);
   shell.stage.append(plaque);
 
-  const timeline = holdTimeline(SCREEN_SECONDS);
+  const timeline = holdTimeline(SCREEN.video + SCREEN.hold);
   timeline.fromTo(
     plaque,
     { opacity: 0, '--wu-y': PAGES_IN.offsetY },

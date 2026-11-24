@@ -49,7 +49,7 @@ export interface ScreenCopy {
 }
 
 /**
- * A still image or element of the animator's layers, placed in the card's Figma frame. Context only.
+ * A still image, an element or the video of the animator's layers, placed in the card's Figma frame. Context only.
  * Images are PNGs with a transparent background, drawn with normal blending.
  */
 export interface Still {
@@ -64,6 +64,8 @@ export interface Still {
   image?: string;
   /** For stills that are not a single image, e.g. a sticker. Built at Figma size; the shell scales it. */
   node?: () => HTMLElement;
+  /** A layer the screen keeps and plays itself: the animator's video. At Figma size, scaled like `node`, never rebuilt. */
+  element?: HTMLElement;
 }
 
 /** Anything the shell can run together with the screen. */

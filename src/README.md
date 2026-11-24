@@ -26,7 +26,8 @@ Each JS file is a self-contained ES module: code and styles in one file, `gsap` 
 added to the page as a `<style>` tag on first mount. Everything a component renders has a transparent background;
 screen backgrounds, header, text and transitions stay in the app, and so do the animator's MP4 and Lottie layers
 (illustrations, garlands, scenes). `FallingLeaves.js` stands in for the
-animator's MP4 for now.
+animator's MP4 for now. The animator's videos that are ready are in `video/` of the repository, not in this
+folder: see "Videos from the animator" at the end.
 
 ## Shared by all cards
 
@@ -45,11 +46,11 @@ card.play();      // when the screen is in; all timings count from here
 | `pause()` | Freezes the animation, e.g. while the user holds the story. |
 | `seek(t)` | Jumps to `t` seconds. |
 | `destroy()` | Stops and removes the card from the container. |
-| `duration` | `6`: the length of the whole screen in seconds. The animation ends earlier, then the card holds. |
+| `duration` | The length of the whole screen in seconds: `6`, except VisitsCount (`8.5`, see there). The animation ends earlier, then the card holds. |
 
 | Option | Default | |
 | --- | --- | --- |
-| `onComplete` | none | Called when the screen's 6 s are up. |
+| `onComplete` | none | Called when the screen's time (`duration`) is up. |
 | `autoplay` | `false` | Start right after mounting instead of waiting for `play()`. |
 | `maxScale` | `1.15` | Largest scale relative to the Figma size. |
 | `locale` | `'en-US'` | Names of months and weekdays, number formatting. |
@@ -69,7 +70,7 @@ card.play();      // when the screen is in; all timings count from here
   ```
 
   `ready` never rejects; a component without images (most cards) is ready at once. `play()` called before
-  `ready` waits for it by itself and only then starts the 6 s clock. If the images are still not there after
+  `ready` waits for it by itself and only then starts the screen's clock. If the images are still not there after
   2 s, the animation starts without them and each missing image fades in over 0.2 s when it arrives. Components
   with images: FirstVisitCard, VisitsCount and CaredForCard (the sticker's heart) and FallingLeaves (the sprites).
 
@@ -105,7 +106,7 @@ card.play();      // when the screen is in; all timings count from here
   // "…between 10 AM" / "and 2 PM.": "10 AM" and "2 PM" can no longer be split
   ```
 - **Reduced motion.** With the system's `prefers-reduced-motion` a card shows its final state at once; `duration`
-  and `onComplete` keep the same 6 s.
+  and `onComplete` stay as they are.
 - **Tokens and fonts.** Colors read the app's CSS variables named like the Figma tokens (`--brand-500`,
   `--olive-300`, `--emerald-500`, `--beige-50`, `--taupe-700`, …) and fall back to the Figma values. The font is
   `--wu-font-sans`, falling back to Rethink Sans, which the app is expected to load.
@@ -155,7 +156,7 @@ visits.play();
 ```
 
 The plaque and the sticker of screen 03. Frame 360 x 360, at `left: 0; top: 400px` on the Figma screen: the same
-box as the door illustration (the app's MP4), so lay it over that.
+box as the door illustration (the animator's video, see "Videos from the animator"), so lay it over that.
 
 | Data | Type | |
 | --- | --- | --- |
@@ -167,6 +168,10 @@ sticker's heart image; only needed if the bundler does not resolve `new URL('./a
 
 Motion: the plaque slides in at 0.4–0.9 s, the number counts from 0 at 1.0–2.5 s, the sticker pops in at 2.5 s.
 Numbers of four and more digits are set smaller so they fit the plaque.
+
+**This screen lasts 8.5 s, not 6:** `duration` is `8.5` and `onComplete` fires then. The door video is 7 s long
+and plays to its end; its last frame, the open door, then stays for another 1.5 s. Take the screen's length
+from `visits.duration` instead of assuming 6.
 
 ## HoursClock
 
@@ -219,7 +224,7 @@ The card picks its variant from the data:
 
 | Option | Default | |
 | --- | --- | --- |
-| `onComplete` | none | Called when the screen's 6 s are up. |
+| `onComplete` | none | Called when the screen's time (`duration`) is up. |
 | `autoplay` | `false` | Start right after mounting instead of waiting for `play()`. |
 | `maxScale` | `1.15` | Largest scale relative to the Figma size. |
 | `steadyThreshold` | `0.22` | See `steady` above. |
@@ -668,3 +673,108 @@ pass it back in as `muted`.
 Both with a 6 px background blur, as Close has in Figma. To use other colors, set `--wu-sound-fill` and
 `--wu-sound-icon` on the slot. The button is set in px like the rest of the header; set `--wu-unit` to scale it.
 The element also carries `data-state="muted" | "unmuted"`.
+
+## Videos from the animator
+
+The animator's layers come as video with a transparent background. They are not components: the files are in
+`video/` of the repository (not in this folder) and the app embeds them itself, as described here.
+
+| Files | Screen | Picture | Length |
+| --- | --- | --- | --- |
+| `03-visits-door.mov` (0.6 MB), `03-visits-door.webm` (0.8 MB) | 03 Visits | 760 x 1000 px, 3 px per Figma px | 7 s, 30 fps, no sound |
+
+Each video comes in two files, because no single format with transparency plays everywhere: the `.mov` is HEVC
+with alpha for Safari and iOS, the `.webm` is VP9 with alpha for Chrome, Android and Firefox.
+
+```html
+<video muted playsinline preload="auto" disablepictureinpicture aria-hidden="true">
+  <source src="video/03-visits-door.mov" type='video/mp4; codecs="hvc1"'>
+  <source src="video/03-visits-door.webm" type="video/webm">
+</video>
+```
+
+- **Keep the two sources in this order and with exactly these `type` values.** Safari takes the first. Chrome
+  can play HEVC but not its transparency; it turns the short `hvc1` down because it expects a full codec
+  string, and goes on to the WebM. With another type on the first source (`video/mp4` alone, or
+  `video/quicktime`) Chrome may take the HEVC file and show it on a black background.
+- `muted` and `playsinline` must be in the markup: without them iOS does not start the video by itself, or
+  opens it full screen. No `autoplay`, no `loop`, no `controls`: the app starts it, and a video without `loop`
+  stays on its last frame when it ends.
+- The server must answer byte-range requests, or Safari does not play the file.
+- The background of the `<video>` stays transparent; do not give it a color or a `poster`.
+
+**Driving it with the screen.** Treat the video like one more component of the screen:
+
+```js
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const lastFrame = () => (video.currentTime = Math.max(video.duration - 0.01, 0));
+
+// Like a component's `ready`: never rejects, and never holds the screen for more than 2 s.
+const ready = new Promise((resolve) => {
+  video.addEventListener('error', resolve, { once: true });
+  video.lastElementChild.addEventListener('error', resolve, { once: true }); // no source could be played
+  setTimeout(resolve, 2000);
+  if (still) {
+    // Reduced motion: show the last frame and leave it there.
+    video.addEventListener('seeked', resolve, { once: true });
+    if (video.readyState >= 1) lastFrame();
+    else video.addEventListener('loadedmetadata', lastFrame, { once: true });
+  } else if (video.readyState >= 4) resolve();
+  else video.addEventListener('canplaythrough', resolve, { once: true });
+});
+
+await Promise.all([visits.ready, ready]);
+visits.play();
+if (!still) video.play().catch(() => {}); // play: together with the card, so both count from the same moment
+
+video.pause();                            // pause: with visits.pause(); video.play() resumes
+if (!still) video.currentTime = t;        // seek: with visits.seek(t)
+
+video.replaceChildren();                  // when the screen is gone: stop, and free the decoder
+video.load();                             // (phones only have a few)
+video.remove();
+```
+
+Under `prefers-reduced-motion` the video never plays: it shows its last frame from the start. The demo does all
+of this in `demo/video.ts`.
+
+### 03 Visits: the door
+
+The video draws the whole arch card of the screen (the white card with its shadow, the door, the woman), so
+nothing else is needed under VisitsCount. Nothing shows until 1.4 s; the arch card comes in at 1.4–2.0 s, the
+door opens at 2.0–3.0 s and the woman waves until 6.3 s; after that the picture stands still. The screen lasts
+8.5 s (`duration` of VisitsCount): the video plays to its end at 7 s and its last frame stays for 1.5 s more.
+
+The picture is larger than the arch card, to leave room for the shadow: the card (210 x 270 at `left: 75px;
+top: 40px` of the 360 x 360 frame of VisitsCount) starts 65 px inside it. That puts the video at
+`left: 53.33px; top: 18.33px`, 253.33 x 333.33, in that frame. Lay it under VisitsCount, in an element that
+covers the same box as its container, and fit it the way the card fits itself:
+
+```js
+function placeDoor(video, container) { // `container` is the one VisitsCount is mounted in
+  const fit = Math.min(container.clientWidth / 360, container.clientHeight / 360, 1.15);
+  Object.assign(video.style, {
+    position: 'absolute',
+    left: `${(container.clientWidth - 360 * fit) / 2 + (75 - 65 / 3) * fit}px`,
+    top: `${(container.clientHeight - 360 * fit) / 2 + (40 - 65 / 3) * fit}px`,
+    width: `${(760 / 3) * fit}px`,
+    height: `${(1000 / 3) * fit}px`,
+  });
+}
+```
+
+Call it again when the container changes size. The plaque and the "With Rosa" sticker stay above the video as
+long as the video comes before the container in the DOM.
+
+### Making the files
+
+The animator delivers ProRes 4444 with alpha (kept out of the repository in `video/source/`) and the WebM. The
+HEVC file is made from the ProRes on a Mac:
+
+```sh
+ffmpeg -i source.mov -map 0:v:0 -c:v hevc_videotoolbox -allow_sw 1 -alpha_quality 0.9 -q:v 62 -g 30 \
+  -tag:v hvc1 -pix_fmt bgra -movflags +faststart 03-visits-door.mov
+```
+
+This writes the colors as they are and marks them as premultiplied, which is what the animator's ProRes holds.
+For a ProRes with straight alpha, add `-vf premultiply=inplace=1`. A WebM holds straight alpha.

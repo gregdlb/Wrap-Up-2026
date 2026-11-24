@@ -259,8 +259,8 @@ function buildScreenTimeline(step: number, screenSeconds: number): gsap.core.Tim
 }
 
 /**
- * The animator's layers are MP4 or Lottie in the app; the demo only shows where they go, as stills.
- * Each one is a transparent PNG placed in px on the card's fitted frame.
+ * The animator's layers are MP4 or Lottie in the app; the demo shows where they go, as stills
+ * (or with the animator's video where we have it). Each one is placed in px on the card's fitted frame.
  */
 function placeStills() {
   const stills = view?.stills ?? [];
@@ -285,8 +285,8 @@ function placeStills() {
       image.src = still.image;
       image.style.transform = `rotate(${still.rotate ?? 0}deg)`;
       box.append(image);
-    } else if (still.node) {
-      const node = still.node();
+    } else if (still.element || still.node) {
+      const node = still.element ?? still.node!();
       node.style.transform = `rotate(${still.rotate ?? 0}deg) scale(${scale})`;
       box.append(node);
     }

@@ -7,7 +7,8 @@ money rain. Framework-agnostic TypeScript with GSAP as the only dependency.
 | --- | --- |
 | [`export/`](export/) | **What the app takes.** One self-contained `.js` per component with its `.d.ts`, the images in `assets/`, and the [integration guide](export/README.md). Generated: do not edit by hand. |
 | [`src/`](src/) | Source of the components. `src/README.md` is the source of the guide in `export/`. |
-| [`demo/`](demo/) | Preview only: every screen with its component, data switches and three phone sizes. Background, header, text and the still illustrations are context from Figma; in the app the illustrations are the animator's MP4 or Lottie. |
+| [`demo/`](demo/) | Preview only: every screen with its component, data switches and three phone sizes. Background, header, text and the still illustrations are context from Figma; in the app the illustrations are the animator's MP4 or Lottie. Screen 03 already plays the animator's video of the door. |
+| [`video/`](video/) | The animator's videos with a transparent background, ready for the app: HEVC with alpha (`.mov`) and VP9 with alpha (`.webm`). How to embed them is in the [integration guide](export/README.md#videos-from-the-animator). The ProRes sources in `video/source/` are not in the repository. |
 | [`reference/`](reference/) | Motion reference video. |
 | [`scripts/`](scripts/) | `build-export.ts`, which generates `export/` from `src/`. |
 

@@ -11,7 +11,7 @@ interface ArchConfig {
   fadeLeft?: boolean;
 }
 
-/** The arch card of screens 03 and 08: the frame the animator's MP4 plays in, here with a still image. */
+/** The arch card of screen 08: the frame the animator's MP4 plays in, here with a still image. */
 function arch({ image, fadeLeft, ...box }: ArchConfig): HTMLElement {
   const card = document.createElement('div');
   card.className = 'demo-arch';
@@ -35,13 +35,7 @@ function arch({ image, fadeLeft, ...box }: ArchConfig): HTMLElement {
   return card;
 }
 
-const door = new URL('./assets/screens/03/door.png', import.meta.url).href;
 const hands = new URL('./assets/screens/08/hands.png', import.meta.url).href;
-
-/** Screen 03: the closed door. */
-export function archDoor(): HTMLElement {
-  return arch({ image: door, left: 0, top: 34, width: 210, height: 236 });
-}
 
 /** Screen 08: the two hands. */
 export function archHands(): HTMLElement {

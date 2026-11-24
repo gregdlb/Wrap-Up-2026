@@ -32,5 +32,5 @@ export function addCounter(
   timeline.fromTo(count, { value: from }, { value: target, duration, ease }, at);
 }
 
-/** Length of every screen in seconds; each card's timeline lasts exactly this long. */
+/** Length of a screen in seconds; each card's timeline lasts exactly this long. Screen 03 (VisitsCount) is longer. */
 export const SCREEN_SECONDS = 6;

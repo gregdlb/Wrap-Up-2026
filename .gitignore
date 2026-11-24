@@ -37,3 +37,6 @@ logs/
 # System files
 .DS_Store
 Thumbs.db
+
+# The animator's source videos (ProRes): too large for the repository
+video/source/

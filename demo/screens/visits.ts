@@ -1,11 +1,29 @@
 import { mountVisitsCount } from '../../src';
 import { pick, randomInt, type DemoScreen } from '../screen';
-import { archDoor } from '../stills';
+import { mountVideo } from '../video';
 
 let state = { visits: 214, personName: 'Rosa' };
 
 const NAMES = ['Rosa', 'Eleanor', 'Walter', 'Margaret', 'Joe', 'Guadalupe', 'Maximiliano', 'Bernadette'];
 const arc = new URL('../assets/screens/03/arc.svg', import.meta.url).href;
+
+/** The animator's video of the door opening, with a transparent background. */
+const DOOR = {
+  hevc: new URL('../../video/03-visits-door.mov', import.meta.url).href,
+  webm: new URL('../../video/03-visits-door.webm', import.meta.url).href,
+};
+/**
+ * The video is 760 x 1000 px, three video px to one Figma px. The arch card it draws, 210 x 270 at (75, 40)
+ * of the Figma frame, starts 65 px inside the picture; the rest is room for the card's shadow.
+ */
+const DOOR_VIDEO = { width: 760, height: 1000, perFigmaPx: 3, cardAt: 65 };
+const ARCH_CARD = { x: 75, y: 40 };
+const DOOR_BOX = {
+  x: ARCH_CARD.x - DOOR_VIDEO.cardAt / DOOR_VIDEO.perFigmaPx,
+  y: ARCH_CARD.y - DOOR_VIDEO.cardAt / DOOR_VIDEO.perFigmaPx,
+  width: DOOR_VIDEO.width / DOOR_VIDEO.perFigmaPx,
+  height: DOOR_VIDEO.height / DOOR_VIDEO.perFigmaPx,
+};
 
 export const visitsScreen: DemoScreen = {
   id: '03',
@@ -17,6 +35,7 @@ export const visitsScreen: DemoScreen = {
   render({ layers, controls, rerender, replay }) {
     const data = { ...state };
     const card = mountVisitsCount(layers.card, data, { onComplete: replay });
+    const door = mountVideo(DOOR, DOOR_BOX);
 
     const update = (next: Partial<typeof state>) => {
       state = { ...state, ...next };
@@ -54,12 +73,15 @@ export const visitsScreen: DemoScreen = {
         ],
         body: `Visits completed in 2026.\nThat’s about ${perWeek} every week.`,
       },
-      parts: [card],
+      parts: [card, door],
       duration: card.duration,
       data,
-      // The door in the arch is the animator's MP4.
-      stills: [{ node: archDoor, x: 75, y: 40, width: 210, height: 270, behind: true }],
-      destroy: () => card.destroy(),
+      // The arch card with the door is the animator's video; the plaque and the sticker stay above it.
+      stills: [{ element: door.element, ...DOOR_BOX, behind: true }],
+      destroy: () => {
+        card.destroy();
+        door.destroy();
+      },
     };
   },
 };
