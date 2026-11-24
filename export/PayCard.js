@@ -136,15 +136,18 @@ var COVER = {
   pill: { paddingX: 16, height: 40, fontSize: 15 }
 };
 var BRUSH = { radius: 20, spacing: 6, jitter: 0.15, hardness: 0.55, specks: 2, speckSize: 0.35 };
-var GRID = { cell: 8, reach: 0.85 };
+var GRID = { cell: 6, reach: 0.85 };
 var TAP = { distance: 8, milliseconds: 350 };
-function createScratch({ canvas, text, fontFamily, colors, threshold, onReveal }) {
+function createScratch({ canvas, text, fontFamily, colors, area, threshold, onReveal }) {
   const context = canvas.getContext("2d");
   const mark = new Path2D(MARK_PATH);
   let unit = 1;
   let columns = 0;
   let wiped = new Uint8Array(0);
+  let counted = new Uint8Array(0);
+  let countedCells = 0;
   let wipedCount = 0;
+  let touched = false;
   let locked = false;
   let press = null;
   const paint = () => {
@@ -179,7 +182,23 @@ function createScratch({ canvas, text, fontFamily, colors, threshold, onReveal }
     context.fillText(text, COVER.width / 2, COVER.height / 2 + 1);
     columns = Math.ceil(COVER.width / GRID.cell);
     wiped = new Uint8Array(columns * Math.ceil(COVER.height / GRID.cell));
+    touched = false;
+    measure();
+  };
+  const measure = () => {
+    const box = area();
+    counted = new Uint8Array(wiped.length);
+    countedCells = 0;
     wipedCount = 0;
+    for (let index = 0;index < wiped.length; index++) {
+      const x = (index % columns + 0.5) * GRID.cell;
+      const y = (Math.floor(index / columns) + 0.5) * GRID.cell;
+      if (box && (x < box.x || x > box.x + box.width || y < box.y || y > box.y + box.height))
+        continue;
+      counted[index] = 1;
+      countedCells++;
+      wipedCount += wiped[index];
+    }
   };
   const dab = (x, y, radius) => {
     const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
@@ -208,7 +227,7 @@ function createScratch({ canvas, text, fontFamily, colors, threshold, onReveal }
         const dy = (row + 0.5) * GRID.cell - y;
         if (wiped[index] === 0 && dx * dx + dy * dy <= reach * reach) {
           wiped[index] = 1;
-          wipedCount++;
+          wipedCount += counted[index];
         }
       }
     }
@@ -222,6 +241,7 @@ function createScratch({ canvas, text, fontFamily, colors, threshold, onReveal }
       stamp(fromX + (toX - fromX) * step / steps, fromY + (toY - fromY) * step / steps);
     }
   };
+  const enough = () => countedCells > 0 && wipedCount / countedCells >= threshold;
   const locate = (event) => {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -246,7 +266,10 @@ function createScratch({ canvas, text, fontFamily, colors, threshold, onReveal }
     } catch {}
     const point = locate(event);
     press = { ...point, startX: point.x, startY: point.y, at: performance.now(), moved: 0 };
+    touched = true;
     wipe(point.x, point.y, point.x, point.y);
+    if (enough())
+      reveal();
   };
   const onMove = (event) => {
     if (locked || !press)
@@ -257,7 +280,7 @@ function createScratch({ canvas, text, fontFamily, colors, threshold, onReveal }
     press.moved = Math.max(press.moved, Math.hypot(point.x - press.startX, point.y - press.startY));
     press.x = point.x;
     press.y = point.y;
-    if (wipedCount / wiped.length >= threshold)
+    if (enough())
       reveal();
   };
   const onUp = (event) => {
@@ -289,12 +312,16 @@ function createScratch({ canvas, text, fontFamily, colors, threshold, onReveal }
       press = null;
       paint();
     },
+    measure,
     lock() {
       locked = true;
       press = null;
     },
     get progress() {
-      return wiped.length > 0 ? wipedCount / wiped.length : 0;
+      return countedCells > 0 ? wipedCount / countedCells : 0;
+    },
+    get untouched() {
+      return !touched;
     },
     destroy() {
       canvas.removeEventListener("pointerdown", onDown);
@@ -316,9 +343,9 @@ var FRAME = { width: 328, height: 220 };
 var TIMING = {
   enter: { at: 0.4, duration: 0.6, offsetY: 24, tilt: -2 },
   waitAt: 1,
-  cover: { duration: 0.2 },
-  count: { at: 1.1, duration: 1.8 }
+  cover: { duration: 0.2 }
 };
+var DIGITS_HEIGHT = 0.74;
 var STYLES = `
 .wu-pay-card__ticket {
   position: absolute;
@@ -415,15 +442,26 @@ function mountPayCard(el, data, options = {}) {
   let pendingStart = null;
   const timeline = holdTimeline(SCREEN_SECONDS);
   timeline.fromTo(ticket, { opacity: 0, "--wu-y": TIMING.enter.offsetY, "--wu-tilt": TIMING.enter.tilt }, { opacity: 1, "--wu-y": 0, "--wu-tilt": 0, duration: TIMING.enter.duration, ease: "power3.out" }, TIMING.enter.at).fromTo(cover, { opacity: 1 }, { opacity: 0, duration: TIMING.cover.duration, ease: "power1.out" }, TIMING.waitAt).addPause(TIMING.waitAt);
-  const drawAmount = () => {
-    const progress = (timeline.time() - TIMING.count.at) / TIMING.count.duration;
-    const counting = timeline.time() > TIMING.waitAt && progress < 1;
-    const eased = 1 - Math.pow(1 - Math.min(Math.max(progress, 0), 1), 3);
-    amount.textContent = money.format(counting ? Math.round(earned * eased) : earned);
+  const syncCover = () => {
     cover.style.pointerEvents = revealed ? "none" : "";
   };
-  timeline.eventCallback("onUpdate", drawAmount);
   timeline.eventCallback("onComplete", () => onComplete?.());
+  const amountArea = () => {
+    const box = cover.getBoundingClientRect();
+    if (box.width === 0)
+      return null;
+    const range = document.createRange();
+    range.selectNodeContents(amount);
+    const text = range.getBoundingClientRect();
+    const toFigma = FRAME.width / box.width;
+    const height = parseFloat(getComputedStyle(amount).fontSize) * DIGITS_HEIGHT * toFigma;
+    return {
+      x: (text.left - box.left) * toFigma,
+      y: (text.top + text.height / 2 - box.top) * toFigma - height / 2,
+      width: text.width * toFigma,
+      height
+    };
+  };
   const scratch = createScratch({
     canvas: cover,
     text: labels.scratch,
@@ -433,6 +471,7 @@ function mountPayCard(el, data, options = {}) {
       pill: token(shell.root, "--wu-card", "#ffffff"),
       pillText: token(shell.root, "--brand-500", "#066e3d")
     },
+    area: amountArea,
     threshold: revealAt,
     onReveal: () => controller.reveal()
   });
@@ -448,8 +487,12 @@ function mountPayCard(el, data, options = {}) {
       scratch.reset();
   });
   document.fonts?.ready.then(() => {
-    if (!destroyed && !revealed && scratch.progress === 0)
+    if (destroyed || revealed)
+      return;
+    if (scratch.untouched)
       scratch.reset();
+    else
+      scratch.measure();
   });
   const cancelPendingStart = () => {
     pendingStart?.kill();
@@ -459,7 +502,7 @@ function mountPayCard(el, data, options = {}) {
     revealed = false;
     scratch.reset();
     timeline.pause(reducedMotion ? TIMING.waitAt : 0, true);
-    drawAmount();
+    syncCover();
   };
   const controller = {
     ready: Promise.resolve(),
@@ -500,7 +543,7 @@ function mountPayCard(el, data, options = {}) {
         scratch.lock();
       }
       timeline.time(time, true);
-      drawAmount();
+      syncCover();
     },
     reveal() {
       if (destroyed || revealed)
@@ -509,10 +552,10 @@ function mountPayCard(el, data, options = {}) {
       revealed = true;
       scratch.lock();
       onRevealed?.();
-      const from = reducedMotion ? TIMING.count.at + TIMING.count.duration : TIMING.waitAt;
+      const from = reducedMotion ? TIMING.waitAt + TIMING.cover.duration : TIMING.waitAt;
       if (reducedMotion || timeline.time() < TIMING.waitAt)
         timeline.time(from, true);
-      drawAmount();
+      syncCover();
       timeline.play();
     },
     destroy() {
@@ -533,7 +576,7 @@ function mountPayCard(el, data, options = {}) {
     }
   };
   timeline.time(reducedMotion ? TIMING.waitAt : 0, true);
-  drawAmount();
+  syncCover();
   if (autoplay)
     controller.play();
   return controller;

@@ -25,11 +25,14 @@ export interface PayCardLabels {
 
 export interface PayCardOptions extends WrapUpOptions {
   /**
-   * Called once, when the cover is wiped far enough (or tapped) and the amount is revealed.
-   * Start MoneyRain and resume the story from here.
+   * Called once, at the moment the amount is revealed: when enough of it is scratched free, or the cover is
+   * tapped, or `reveal()` is called. Start MoneyRain and resume the story from here.
    */
   onRevealed?: () => void;
-  /** Share of the cover (0–1) that has to be wiped before the rest is revealed. Defaults to 0.6. */
+  /**
+   * Share of the amount (0–1) that has to be scratched free before the rest of the cover goes.
+   * Only the area over the digits counts, not the whole card. Defaults to 0.6.
+   */
   revealAt?: number;
   /** Locale for number formatting. Defaults to "en-US". */
   locale?: string;
@@ -57,14 +60,17 @@ const FRAME = { width: 328, height: 220 };
 
 /**
  * Seconds on the card's timeline. It plays the entrance (0.4–1.0) and then waits at `waitAt` for the user.
- * Revealing resumes it: the cover fades, the amount counts from 0, and the rest of the 6 s is a hold.
+ * Revealing resumes it: what is left of the cover fades quickly, and the rest of the 6 s is a hold.
+ * The amount is printed under the cover and stays as it is.
  */
 const TIMING = {
   enter: { at: 0.4, duration: 0.6, offsetY: 24, tilt: -2 },
   waitAt: 1.0,
   cover: { duration: 0.2 },
-  count: { at: 1.1, duration: 1.8 },
 };
+
+/** Of the amount's line only the digits count for the reveal: about this much of the font size, centred. */
+const DIGITS_HEIGHT = 0.74;
 
 const STYLES = /* css */ `
 .wu-pay-card__ticket {
@@ -141,8 +147,8 @@ function prefersReducedMotion(): boolean {
 
 /**
  * Mounts the 09 "Pay" scratch card into `el` and scales it to fit that element.
- * The card slides in, then waits: the user wipes the cover with a finger or the mouse (or taps it),
- * at about 60 % the rest is revealed, `onRevealed` fires and the amount counts up from 0.
+ * The card slides in, then waits: the user wipes the cover with a finger or the mouse (or taps it).
+ * As soon as about 60 % of the amount itself is free, `onRevealed` fires and the rest of the cover fades.
  * The amount is private: it is not part of anything the share card exports.
  */
 export function mountPayCard(el: HTMLElement, data: PayCardData, options: PayCardOptions = {}): PayCardController {
@@ -186,19 +192,28 @@ export function mountPayCard(el: HTMLElement, data: PayCardData, options: PayCar
     .fromTo(cover, { opacity: 1 }, { opacity: 0, duration: TIMING.cover.duration, ease: 'power1.out' }, TIMING.waitAt)
     .addPause(TIMING.waitAt);
 
-  /**
-   * Under the cover the real amount is printed, as on a paper scratch card.
-   * After the reveal it counts from 0 back up to it.
-   */
-  const drawAmount = () => {
-    const progress = (timeline.time() - TIMING.count.at) / TIMING.count.duration;
-    const counting = timeline.time() > TIMING.waitAt && progress < 1;
-    const eased = 1 - Math.pow(1 - Math.min(Math.max(progress, 0), 1), 3);
-    amount.textContent = money.format(counting ? Math.round(earned * eased) : earned);
+  /** Under the cover the amount is printed, as on a paper scratch card; once revealed the cover ignores the finger. */
+  const syncCover = () => {
     cover.style.pointerEvents = revealed ? 'none' : '';
   };
-  timeline.eventCallback('onUpdate', drawAmount);
   timeline.eventCallback('onComplete', () => onComplete?.());
+
+  /** Where the digits of the amount are under the cover, in the Figma px of the card. */
+  const amountArea = () => {
+    const box = cover.getBoundingClientRect();
+    if (box.width === 0) return null;
+    const range = document.createRange();
+    range.selectNodeContents(amount);
+    const text = range.getBoundingClientRect();
+    const toFigma = FRAME.width / box.width;
+    const height = parseFloat(getComputedStyle(amount).fontSize) * DIGITS_HEIGHT * toFigma;
+    return {
+      x: (text.left - box.left) * toFigma,
+      y: (text.top + text.height / 2 - box.top) * toFigma - height / 2,
+      width: text.width * toFigma,
+      height,
+    };
+  };
 
   const scratch = createScratch({
     canvas: cover,
@@ -209,6 +224,7 @@ export function mountPayCard(el: HTMLElement, data: PayCardData, options: PayCar
       pill: token(shell.root, '--wu-card', '#ffffff'),
       pillText: token(shell.root, '--brand-500', '#066e3d'),
     },
+    area: amountArea,
     threshold: revealAt,
     onReveal: () => controller.reveal(),
   });
@@ -223,9 +239,12 @@ export function mountPayCard(el: HTMLElement, data: PayCardData, options: PayCar
     cover.height = pixelHeight;
     if (!revealed) scratch.reset();
   });
-  // The pill's text is drawn with the app's font; repaint once it has loaded.
+  // The pill's text is drawn with the app's font, and the amount is as wide as that font makes it:
+  // repaint once it has loaded, or just measure again when the user has already started.
   void document.fonts?.ready.then(() => {
-    if (!destroyed && !revealed && scratch.progress === 0) scratch.reset();
+    if (destroyed || revealed) return;
+    if (scratch.untouched) scratch.reset();
+    else scratch.measure();
   });
 
   const cancelPendingStart = () => {
@@ -237,7 +256,7 @@ export function mountPayCard(el: HTMLElement, data: PayCardData, options: PayCar
     revealed = false;
     scratch.reset();
     timeline.pause(reducedMotion ? TIMING.waitAt : 0, true);
-    drawAmount();
+    syncCover();
   };
 
   const controller: PayCardController = {
@@ -277,18 +296,19 @@ export function mountPayCard(el: HTMLElement, data: PayCardData, options: PayCar
         scratch.lock();
       }
       timeline.time(time, true);
-      drawAmount();
+      syncCover();
     },
     reveal() {
       if (destroyed || revealed) return;
       cancelPendingStart();
       revealed = true;
       scratch.lock();
+      // In the same moment: the app starts the money rain here.
       onRevealed?.();
-      // With reduced motion the amount is simply there; the timeline only keeps the screen's time.
-      const from = reducedMotion ? TIMING.count.at + TIMING.count.duration : TIMING.waitAt;
+      // With reduced motion the cover is simply gone; the timeline only keeps the screen's time.
+      const from = reducedMotion ? TIMING.waitAt + TIMING.cover.duration : TIMING.waitAt;
       if (reducedMotion || timeline.time() < TIMING.waitAt) timeline.time(from, true);
-      drawAmount();
+      syncCover();
       timeline.play();
     },
     destroy() {
@@ -309,7 +329,7 @@ export function mountPayCard(el: HTMLElement, data: PayCardData, options: PayCar
   };
 
   timeline.time(reducedMotion ? TIMING.waitAt : 0, true);
-  drawAmount();
+  syncCover();
   if (autoplay) controller.play();
   return controller;
 }

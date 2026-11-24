@@ -23,8 +23,8 @@ const COVER = {
  */
 const BRUSH = { radius: 20, spacing: 6, jitter: 0.15, hardness: 0.55, specks: 2, speckSize: 0.35 };
 
-/** Coverage is tracked on a coarse grid instead of reading pixels back from the canvas. */
-const GRID = { cell: 8, reach: 0.85 };
+/** Coverage is tracked on a grid instead of reading pixels back from the canvas. */
+const GRID = { cell: 6, reach: 0.85 };
 
 /** A press that moves less than this and ends sooner than this counts as a tap. */
 const TAP = { distance: 8, milliseconds: 350 };
@@ -35,12 +35,25 @@ export interface ScratchColors {
   pillText: string;
 }
 
+/** A box on the cover, in the Figma px of the 328 x 220 card. */
+export interface ScratchArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 interface ScratchConfig {
   canvas: HTMLCanvasElement;
   text: string;
   fontFamily: string;
   colors: ScratchColors;
-  /** Share of the cover (0–1) that has to be wiped before the rest is revealed. */
+  /**
+   * The part of the cover that hides what the user is after (the amount). Only what is wiped inside it
+   * counts towards the reveal. Asked for when the cover is painted; null means the whole cover.
+   */
+  area(): ScratchArea | null;
+  /** Share of that area (0–1) that has to be wiped before the rest is revealed. */
   threshold: number;
   /** Called once, when the threshold is reached or the cover is tapped. */
   onReveal(): void;
@@ -49,20 +62,28 @@ interface ScratchConfig {
 export interface Scratch {
   /** Paints a fresh cover and forgets what was wiped. */
   reset(): void;
+  /** Asks for the area again, e.g. once the fonts are in, and keeps what was wiped. */
+  measure(): void;
   /** Stops reacting to the pointer. */
   lock(): void;
-  /** Share of the cover wiped so far, 0–1. */
+  /** Share of the area wiped so far, 0–1. */
   readonly progress: number;
+  /** True until the first stroke. */
+  readonly untouched: boolean;
   destroy(): void;
 }
 
-export function createScratch({ canvas, text, fontFamily, colors, threshold, onReveal }: ScratchConfig): Scratch {
+export function createScratch({ canvas, text, fontFamily, colors, area, threshold, onReveal }: ScratchConfig): Scratch {
   const context = canvas.getContext('2d')!;
   const mark = new Path2D(MARK_PATH);
   let unit = 1;
   let columns = 0;
   let wiped = new Uint8Array(0);
+  /** 1 for the cells of the grid that lie in the area that counts. */
+  let counted = new Uint8Array(0);
+  let countedCells = 0;
   let wipedCount = 0;
+  let touched = false;
   let locked = false;
   let press: { x: number; y: number; startX: number; startY: number; at: number; moved: number } | null = null;
 
@@ -101,7 +122,24 @@ export function createScratch({ canvas, text, fontFamily, colors, threshold, onR
 
     columns = Math.ceil(COVER.width / GRID.cell);
     wiped = new Uint8Array(columns * Math.ceil(COVER.height / GRID.cell));
+    touched = false;
+    measure();
+  };
+
+  /** Marks the cells whose centre lies in the area, and counts how many of them are already wiped. */
+  const measure = () => {
+    const box = area();
+    counted = new Uint8Array(wiped.length);
+    countedCells = 0;
     wipedCount = 0;
+    for (let index = 0; index < wiped.length; index++) {
+      const x = ((index % columns) + 0.5) * GRID.cell;
+      const y = (Math.floor(index / columns) + 0.5) * GRID.cell;
+      if (box && (x < box.x || x > box.x + box.width || y < box.y || y > box.y + box.height)) continue;
+      counted[index] = 1;
+      countedCells++;
+      wipedCount += wiped[index]!;
+    }
   };
 
   /** One soft dab of the brush at a point given in Figma px. */
@@ -134,7 +172,7 @@ export function createScratch({ canvas, text, fontFamily, colors, threshold, onR
         const dy = (row + 0.5) * GRID.cell - y;
         if (wiped[index] === 0 && dx * dx + dy * dy <= reach * reach) {
           wiped[index] = 1;
-          wipedCount++;
+          wipedCount += counted[index]!;
         }
       }
     }
@@ -150,6 +188,9 @@ export function createScratch({ canvas, text, fontFamily, colors, threshold, onR
       stamp(fromX + ((toX - fromX) * step) / steps, fromY + ((toY - fromY) * step) / steps);
     }
   };
+
+  /** The moment enough of the amount shows, the rest goes: no need to clear the whole card. */
+  const enough = () => countedCells > 0 && wipedCount / countedCells >= threshold;
 
   /** Pointer position in Figma px, correct inside scaled or transformed ancestors too. */
   const locate = (event: PointerEvent) => {
@@ -178,7 +219,9 @@ export function createScratch({ canvas, text, fontFamily, colors, threshold, onR
     }
     const point = locate(event);
     press = { ...point, startX: point.x, startY: point.y, at: performance.now(), moved: 0 };
+    touched = true;
     wipe(point.x, point.y, point.x, point.y);
+    if (enough()) reveal();
   };
 
   const onMove = (event: PointerEvent) => {
@@ -189,7 +232,7 @@ export function createScratch({ canvas, text, fontFamily, colors, threshold, onR
     press.moved = Math.max(press.moved, Math.hypot(point.x - press.startX, point.y - press.startY));
     press.x = point.x;
     press.y = point.y;
-    if (wipedCount / wiped.length >= threshold) reveal();
+    if (enough()) reveal();
   };
 
   const onUp = (event: PointerEvent) => {
@@ -222,12 +265,16 @@ export function createScratch({ canvas, text, fontFamily, colors, threshold, onR
       press = null;
       paint();
     },
+    measure,
     lock() {
       locked = true;
       press = null;
     },
     get progress() {
-      return wiped.length > 0 ? wipedCount / wiped.length : 0;
+      return countedCells > 0 ? wipedCount / countedCells : 0;
+    },
+    get untouched() {
+      return !touched;
     },
     destroy() {
       canvas.removeEventListener('pointerdown', onDown);

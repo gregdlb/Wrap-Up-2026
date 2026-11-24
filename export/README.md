@@ -479,8 +479,8 @@ notches are real holes, so the screen's background shows through them.
 
 | Option | Default | |
 | --- | --- | --- |
-| `onRevealed` | none | Called once when the amount is revealed. Start MoneyRain and resume the story here. |
-| `revealAt` | `0.6` | Share of the cover that has to be wiped before the rest is revealed. |
+| `onRevealed` | none | Called once, at the moment the amount is revealed. Start MoneyRain and resume the story here. |
+| `revealAt` | `0.6` | Share of the amount (the area over its digits, not the whole card) that has to be scratched free before the rest of the cover goes. |
 | `currency` | `'USD'` | ISO currency code for the amount. |
 | `labels` | `{ scratch: 'Scratch or tap to reveal', paychecks: 'across {paychecks} paychecks in {year}' }` | Texts. |
 
@@ -492,20 +492,23 @@ How it runs:
 1. `play()`: the card slides in with a small tilt at 0.4–1.0 s, then **waits**. The story should pause here.
    `play()` does not move it past this point.
 2. The user wipes the cover with a finger or the mouse. The cover is a canvas; the brush is soft with a slightly
-   irregular edge. Under it the real amount is printed, as on a paper scratch card. A tap, Enter or Space on the
-   cover reveals it as well. Pointer events on the cover do not bubble, so scratching cannot trigger the story's
-   tap navigation.
-3. At 60 % wiped (`revealAt`) the rest of the cover disappears by itself in a quick 0.2 s fade, `onRevealed`
-   fires and the amount counts up from $0 to the full amount (1.8 s). Start MoneyRain in `onRevealed`.
-4. The timeline then runs on to its 6 s, and `onComplete` fires 5 s after the reveal.
+   irregular edge. Under it the amount is printed, as on a paper scratch card. Pointer events on the cover do
+   not bubble, so scratching cannot trigger the story's tap navigation.
+3. As soon as about 60 % of the amount itself is free (`revealAt`; wiping the rest of the card does not
+   count), `onRevealed` fires, in that same moment, and what is left of the cover goes in a quick 0.2 s fade.
+   The amount is not animated: it stays as it is printed. Start MoneyRain in `onRevealed`, so the money falls
+   the instant the amount shows.
+4. Without scratching, a tap, Enter or Space on the cover, or `reveal()` from the app, reveals it the same
+   way. There is no timer in the component: if the story should move on by itself, call `reveal()`.
+5. The timeline then runs on to its 6 s, and `onComplete` fires 5 s after the reveal.
 
 `seek(t)` below 1 s brings back a fresh cover; above 1 s it shows the revealed state.
 
 The amount is private. Nothing in these components exports it: `ThankYouCard.exportImage()` has no access to it,
 and the card's root carries `data-private="true"` in case the app builds its own share image from the DOM.
 
-With the system's `prefers-reduced-motion` the card is in place at once, still waits for the scratch, and shows
-the amount without counting.
+With the system's `prefers-reduced-motion` the card is in place at once, still waits for the scratch, and the
+rest of the cover is gone at once instead of fading.
 
 ## MoneyRain
 

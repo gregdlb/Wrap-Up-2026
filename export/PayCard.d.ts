@@ -16,11 +16,14 @@ export interface PayCardLabels {
 
 export interface PayCardOptions extends WrapUpOptions {
     /**
-     * Called once, when the cover is wiped far enough (or tapped) and the amount is revealed.
-     * Start MoneyRain and resume the story from here.
+     * Called once, at the moment the amount is revealed: when enough of it is scratched free, or the cover is
+     * tapped, or `reveal()` is called. Start MoneyRain and resume the story from here.
      */
     onRevealed?: () => void;
-    /** Share of the cover (0–1) that has to be wiped before the rest is revealed. Defaults to 0.6. */
+    /**
+     * Share of the amount (0–1) that has to be scratched free before the rest of the cover goes.
+     * Only the area over the digits counts, not the whole card. Defaults to 0.6.
+     */
     revealAt?: number;
     /** Locale for number formatting. Defaults to "en-US". */
     locale?: string;
@@ -40,8 +43,8 @@ export interface PayCardController extends WrapUpController {
 
 /**
  * Mounts the 09 "Pay" scratch card into `el` and scales it to fit that element.
- * The card slides in, then waits: the user wipes the cover with a finger or the mouse (or taps it),
- * at about 60 % the rest is revealed, `onRevealed` fires and the amount counts up from 0.
+ * The card slides in, then waits: the user wipes the cover with a finger or the mouse (or taps it).
+ * As soon as about 60 % of the amount itself is free, `onRevealed` fires and the rest of the cover fades.
  * The amount is private: it is not part of anything the share card exports.
  */
 export declare function mountPayCard(el: HTMLElement, data: PayCardData, options?: PayCardOptions): PayCardController;
