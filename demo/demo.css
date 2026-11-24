@@ -551,3 +551,72 @@ pre {
     gap: 24px;
   }
 }
+
+/*
+ * Phones: the panel is as wide as the screen allows and nothing in it may be wider.
+ * A grid column is at least as wide as its widest item (a select counts with its longest option),
+ * so every column here is told that it may shrink.
+ */
+@media (max-width: 520px) {
+  .panel,
+  .field,
+  .controls,
+  .readout,
+  .share-preview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel {
+    overflow-wrap: anywhere;
+  }
+
+  /* One button per row: two side by side are too narrow for their labels. */
+  .buttons {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel select,
+  .panel input,
+  .panel button,
+  .panel pre {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Safari lets a long chosen option run out of its select and widen the page. */
+  .panel select {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Below 16 px iOS zooms the page in when a field gets the focus. */
+  .panel select,
+  .panel .field input:not([type='range']) {
+    font-size: 16px;
+  }
+
+  /* On iOS a date field keeps its own width unless its native look is taken off. */
+  .panel input[type='date'] {
+    display: flex;
+    align-items: center;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  .panel input[type='date']::-webkit-date-and-time-value {
+    text-align: left;
+  }
+
+  /* The browser's own side margins would push the slider 2 px past the panel. */
+  .panel input[type='range'] {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Long values wrap; what cannot wrap scrolls inside its own block. */
+  .panel pre {
+    overflow-x: auto;
+  }
+}
