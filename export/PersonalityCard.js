@@ -222,6 +222,10 @@ function addCounter(timeline, node, target, options) {
   timeline.fromTo(count, { value: from }, { value: target, duration, ease }, at);
 }
 var SCREEN_SECONDS = 6;
+var VIDEO_HOLD_SECONDS = 1.5;
+function screenSeconds(videoSeconds = 0) {
+  return Math.max(SCREEN_SECONDS, Math.round((videoSeconds + VIDEO_HOLD_SECONDS) * 100) / 100);
+}
 
 // src/shared/pages.ts
 var PAGES_STYLES = `
@@ -521,6 +525,13 @@ function countable(data, locale) {
   const numberFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
   return { target: toNumber(data), format: (value) => numberFormat.format(Math.round(value)) };
 }
+var SCENE_VIDEO_SECONDS = {
+  early_bird: 5.04,
+  night_owl: 5,
+  midday_hero: 3,
+  rock: 3,
+  steady_one: 3
+};
 function mountPersonalityCard(el, data, options = {}) {
   const { locale = "en-US", autoplay = false, onComplete, maxScale } = options;
   const { target, format } = countable(data, locale);
@@ -547,7 +558,7 @@ function mountPersonalityCard(el, data, options = {}) {
   const chipRow = line("chip-row");
   chipRow.append(chip);
   pages.front.append(line("label", keepTogether(data.label)), value, line("sub", keepTogether(data.sub)), chipRow);
-  const timeline = holdTimeline(SCREEN_SECONDS);
+  const timeline = holdTimeline(screenSeconds(SCENE_VIDEO_SECONDS[data.type]));
   addPagesIn(timeline, pages);
   addBlankFlips(timeline, pages.front);
   addCounter(timeline, value, target, { ...TIMING.value, format });

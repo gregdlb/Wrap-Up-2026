@@ -1,4 +1,5 @@
 import { createController, holdTimeline, type WrapUpController, type WrapUpOptions } from '../shared/controller';
+import { screenSeconds } from '../shared/counter';
 import { containScale, DEFAULT_MAX_SCALE, observeSize } from '../shared/fit';
 import { MONTHS_CARD_FRAME } from '../shared/screen-05';
 import { addBlankFlips } from '../shared/flips';
@@ -30,6 +31,12 @@ export interface BusiestMonthCardOptions extends WrapUpOptions {
   ariaLabel?: string;
   /** Largest scale relative to the Figma size. Defaults to 1.15. */
   maxScale?: number;
+  /**
+   * Month of the screen's garland and leaves, 1 = January: the number FallingLeaves gets.
+   * It only sets `duration`: a month with a long garland video makes the screen longer than 6 s.
+   * Defaults to the busiest month. Pass it with `weeks`, where the card cannot tell the month.
+   */
+  month?: number;
 }
 
 export interface BusiestMonthCardController extends WrapUpController {
@@ -40,11 +47,10 @@ export interface BusiestMonthCardController extends WrapUpController {
 const DEFAULT_LABELS: BusiestMonthCardLabels = { visit: 'visit', visits: 'visits', perMonth: 'a month' };
 
 /**
- * Seconds from `play()`. The screen lasts 6 s: pages come in at 0.4–1.0, bars and counter are done by 2.5,
+ * Seconds from `play()`: pages come in at 0.4–1.0, bars and counter are done by 2.5,
  * the busiest bar is highlighted by 2.8, then the card holds until the screen ends.
  */
 const TIMING = {
-  screen: 6,
   pages: { at: 0.4, duration: 0.48, stagger: 0.06, offsetY: 24 },
   // Bars and counter start when the last blank sheet has turned see-through.
   bars: { at: 1.05, endAt: 2.5, stagger: 0.04, minDuration: 0.3 },
@@ -222,9 +228,10 @@ function buildTimeline(
   view: BusiestMonthCardView,
   target: number,
   format: (value: number) => string,
+  seconds: number,
 ): gsap.core.Timeline {
   const { pages, bars, counter, highlight } = TIMING;
-  const timeline = holdTimeline(TIMING.screen);
+  const timeline = holdTimeline(seconds);
   // The last bar lands together with the counter, however many bars there are.
   const barDuration = Math.max(bars.minDuration, bars.endAt - bars.at - bars.stagger * (view.bars.length - 1));
 
@@ -295,6 +302,12 @@ function buildTimeline(
 }
 
 /**
+ * Seconds of the animator's garland video by month (1 = January), for the months that have one. A screen
+ * whose video plus the time on its last frame does not fit into 6 s lasts longer (March, April).
+ */
+const GARLAND_VIDEO_SECONDS: Partial<Record<number, number>> = { 1: 4, 2: 2.63, 3: 4.79, 4: 4.54, 5: 4 };
+
+/**
  * Mounts the 05 "Busiest month" card into `el` and scales it to fit that element.
  * The card picks its own variant (peak, tie, steady, busiest week) from the data.
  */
@@ -323,7 +336,10 @@ export function mountBusiestMonthCard(
   el.append(view.root);
   const stopFitting = fitToContainer(view.root, maxScale);
 
-  const timeline = buildTimeline(view, analysis.value, format);
+  // The month whose garland the screen shows. With weeks on the card only the app knows it.
+  const month = options.month ?? (analysis.variant === 'busiest_week' ? undefined : analysis.primaryIndex + 1);
+  const garlandSeconds = month === undefined ? undefined : GARLAND_VIDEO_SECONDS[month];
+  const timeline = buildTimeline(view, analysis.value, format, screenSeconds(garlandSeconds));
   addBlankFlips(timeline, view.pages[0]!);
 
   const controller = createController({

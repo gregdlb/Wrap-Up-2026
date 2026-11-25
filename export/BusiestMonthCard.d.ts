@@ -16,6 +16,12 @@ export interface BusiestMonthCardOptions extends WrapUpOptions {
     ariaLabel?: string;
     /** Largest scale relative to the Figma size. Defaults to 1.15. */
     maxScale?: number;
+    /**
+     * Month of the screen's garland and leaves, 1 = January: the number FallingLeaves gets.
+     * It only sets `duration`: a month with a long garland video makes the screen longer than 6 s.
+     * Defaults to the busiest month. Pass it with `weeks`, where the card cannot tell the month.
+     */
+    month?: number;
 }
 
 export interface BusiestMonthCardController extends WrapUpController {

@@ -1,6 +1,7 @@
 import { mountPersonalityCard, type PersonalityCardData, type PersonalityValueType } from '../../src';
 import personalitiesJson from '../personalities.json';
 import { randomInt, type DemoScreen } from '../screen';
+import { mountVideo } from '../video';
 
 /** Look and sample copy of the nine personality screens, extracted from Figma (section "06 Personality · all types"). */
 interface PersonalityLook {
@@ -44,6 +45,28 @@ const VALUES: Record<string, { type: PersonalityValueType; random: () => number 
 /** The frame's top on the 782 px tall Figma screen; the scenes are placed in screen coordinates in Figma. */
 const CARD_TOP = 413;
 
+const videoFiles = import.meta.glob<string>('../../video/06-personality-*', { eager: true, query: '?url', import: 'default' });
+
+/**
+ * The animator's scene videos, by personality; the other types keep their still.
+ * Each picture is 1080 x 1080 px and fills the 400 x 400 box of the Figma scene.
+ */
+const SCENE_VIDEOS: Record<string, string> = {
+  early_bird: 'early-bird',
+  night_owl: 'night-owl',
+  midday_hero: 'midday-hero',
+  rock: 'rock',
+  steady_one: 'steady-one',
+};
+
+/** The scene video of a personality at the size of its Figma box, or null for a type that has none. */
+function sceneVideo(look: PersonalityLook) {
+  const name = SCENE_VIDEOS[look.key];
+  if (!name) return null;
+  const file = (extension: string) => videoFiles[`../../video/06-personality-${name}.${extension}`] ?? '';
+  return mountVideo({ hevc: file('mov'), webm: file('webm') }, look.scene);
+}
+
 let typeKey = 'early_bird';
 let override: number | string | null = null;
 
@@ -66,6 +89,15 @@ export const personalityScreen: DemoScreen = {
       chip: look.card.chip,
     };
     const card = mountPersonalityCard(layers.card, data, { onComplete: replay });
+    const scene = sceneVideo(look);
+    const sceneBox = {
+      x: look.scene.left,
+      y: look.scene.top - CARD_TOP,
+      width: look.scene.width,
+      height: look.scene.height,
+      behind: true,
+      opacity: look.scene.opacity,
+    };
 
     controls.select(
       'Personality',
@@ -104,23 +136,16 @@ export const personalityScreen: DemoScreen = {
         ],
         body: look.body.text,
       },
-      parts: [card],
+      parts: scene ? [card, scene] : [card],
       duration: card.duration,
       data,
       note: `${look.name} · ${values.type}`,
-      // The scene behind the card is the animator's MP4, one per personality.
-      stills: [
-        {
-          image: file(look.scene.file),
-          x: look.scene.left,
-          y: look.scene.top - CARD_TOP,
-          width: look.scene.width,
-          height: look.scene.height,
-          behind: true,
-          opacity: look.scene.opacity,
-        },
-      ],
-      destroy: () => card.destroy(),
+      // The scene behind the card: the animator's video where we have it, a still for the other types.
+      stills: [scene ? { element: scene.element, ...sceneBox } : { image: file(look.scene.file), ...sceneBox }],
+      destroy() {
+        card.destroy();
+        scene?.destroy();
+      },
     };
   },
 };

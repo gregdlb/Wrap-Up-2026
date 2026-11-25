@@ -260,6 +260,11 @@ function addCounter(timeline, node, target, options) {
   };
   timeline.fromTo(count, { value: from }, { value: target, duration, ease }, at);
 }
+var SCREEN_SECONDS = 6;
+var VIDEO_HOLD_SECONDS = 1.5;
+function screenSeconds(videoSeconds = 0) {
+  return Math.max(SCREEN_SECONDS, Math.round((videoSeconds + VIDEO_HOLD_SECONDS) * 100) / 100);
+}
 
 // src/shared/pages.ts
 var PAGES_IN = { at: 0.4, duration: 0.48, stagger: 0.06, offsetY: 24, endAt: 1 };
@@ -335,7 +340,7 @@ var FRAME = { width: 360, height: 360 };
 var PLAQUE = { x: 241.87, y: 154.81, w: 96, h: 74 };
 var STICKER = { x: 37.9, y: 295.87, tilt: 6 };
 var TIMING = { counter: { at: 1, duration: 1.5 }, sticker: 2.5 };
-var SCREEN = { video: 7, hold: 1.5 };
+var DOOR_VIDEO_SECONDS = 7;
 var NUMBER_SIZES = [36, 36, 36, 36, 30, 26, 22];
 var STYLES = `
 .wu-visits-count__plaque {
@@ -394,7 +399,7 @@ function mountVisitsCount(el, data, options = {}) {
   number.style.setProperty("--wu-number-size", String(NUMBER_SIZES[Math.min(digits, NUMBER_SIZES.length - 1)]));
   plaque.append(element("wu-visits-count__title", labels.visits), number);
   shell.stage.append(plaque);
-  const timeline = holdTimeline(SCREEN.video + SCREEN.hold);
+  const timeline = holdTimeline(screenSeconds(DOOR_VIDEO_SECONDS));
   timeline.fromTo(plaque, { opacity: 0, "--wu-y": PAGES_IN.offsetY }, { opacity: 1, "--wu-y": 0, duration: PAGES_IN.duration, ease: "power3.out" }, PAGES_IN.at);
   addCounter(timeline, number, visits, { ...TIMING.counter, format });
   if (stickerText) {

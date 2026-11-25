@@ -1,6 +1,6 @@
 import { createCardShell, element } from '../shared/card';
 import { createController, holdTimeline, type WrapUpController, type WrapUpOptions } from '../shared/controller';
-import { addCounter, SCREEN_SECONDS } from '../shared/counter';
+import { addCounter, screenSeconds } from '../shared/counter';
 import { addBlankFlips } from '../shared/flips';
 import { addPagesIn, createPages } from '../shared/pages';
 import { ensureStyles } from '../shared/styles';
@@ -189,6 +189,18 @@ function countable(data: PersonalityCardData, locale: string): Countable {
 }
 
 /**
+ * Seconds of the animator's scene video behind the card, for the types that have one. A screen whose video
+ * plus the time on its last frame does not fit into 6 s lasts longer (The Early Bird, The Night Owl).
+ */
+const SCENE_VIDEO_SECONDS: Partial<Record<string, number>> = {
+  early_bird: 5.04,
+  night_owl: 5,
+  midday_hero: 3,
+  rock: 3,
+  steady_one: 3,
+};
+
+/**
  * Mounts the 06 "Clock-in personality" stat card into `el` and scales it to fit that element.
  * One component for every personality type: label, a value that counts up, a sub line and a chip.
  */
@@ -226,7 +238,7 @@ export function mountPersonalityCard(
 
   pages.front.append(line('label', keepTogether(data.label)), value, line('sub', keepTogether(data.sub)), chipRow);
 
-  const timeline = holdTimeline(SCREEN_SECONDS);
+  const timeline = holdTimeline(screenSeconds(SCENE_VIDEO_SECONDS[data.type]));
   addPagesIn(timeline, pages);
   addBlankFlips(timeline, pages.front);
   addCounter(timeline, value, target, { ...TIMING.value, format });

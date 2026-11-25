@@ -1,6 +1,7 @@
 import { mountBusiestMonthCard, mountFallingLeaves, type BusiestMonthCardAnalysis } from '../../src';
 import { MONTH_NAMES, monthBackdrop } from '../backdrop';
 import { GARLAND_STILLS } from '../garland-stills';
+import { mountVideo } from '../video';
 import { peakYear, randomMonthIndex, steadyYear, tieYear, toData, weeksAround, type SampleWeeks } from '../sample-data';
 import type { DemoScreen, ScreenCopy } from '../screen';
 
@@ -48,6 +49,37 @@ function copyFor(analysis: BusiestMonthCardAnalysis, weeks: SampleWeeks | null):
   return { tag: 'Busiest month', rows, body: `${analysis.value} visits, more than any other month.` };
 }
 
+const videoFiles = import.meta.glob<string>('../../video/05-busiest-month-*', { eager: true, query: '?url', import: 'default' });
+
+/**
+ * The animator's garland videos, by month index (0 = January); the other months keep their still.
+ * Every picture is 760 x 420 px. `x`, `y` is where its corner goes in the 360 x 350 "Months card" frame and
+ * `perFigmaPx` how many video px make one Figma px, both measured so that the garland of the last frame lies
+ * on the Figma garland (the snowman and the heart included). The pictures are not all cut the same way.
+ */
+const GARLAND_VIDEOS: Record<number, { file: string; x: number; y: number; perFigmaPx: number }> = {
+  0: { file: 'january', x: 53.5, y: -48, perFigmaPx: 3 },
+  1: { file: 'february', x: 52.5, y: -50.75, perFigmaPx: 2.95 },
+  2: { file: 'march', x: 51.5, y: -49.5, perFigmaPx: 3 },
+  3: { file: 'april', x: 49.5, y: -50, perFigmaPx: 3 },
+  4: { file: 'may', x: 49.25, y: -48, perFigmaPx: 3 },
+};
+const GARLAND_PICTURE = { width: 760, height: 420 };
+
+/** The garland video of a month and where it goes, or null for a month that has none. */
+function garlandVideo(monthIndex: number) {
+  const video = GARLAND_VIDEOS[monthIndex];
+  if (!video) return null;
+  const box = {
+    x: video.x,
+    y: video.y,
+    width: GARLAND_PICTURE.width / video.perFigmaPx,
+    height: GARLAND_PICTURE.height / video.perFigmaPx,
+  };
+  const file = (extension: string) => videoFiles[`../../video/05-busiest-month-${video.file}.${extension}`] ?? '';
+  return { box, player: mountVideo({ hevc: file('mov'), webm: file('webm') }, box) };
+}
+
 export const busiestMonthScreen: DemoScreen = {
   id: '05',
   label: '05 Busiest month · BusiestMonthCard + FallingLeaves',
@@ -57,9 +89,14 @@ export const busiestMonthScreen: DemoScreen = {
 
   render({ layers, controls, rerender, replay }) {
     const data = toData(state.visitsPerMonth, state.weeks?.weeks);
-    const card = mountBusiestMonthCard(layers.card, data, { onComplete: replay });
+    // With weeks on the card, the app tells it the month: the screen's length depends on the month's garland video.
+    const card = mountBusiestMonthCard(layers.card, data, {
+      onComplete: replay,
+      ...(state.weeks ? { month: state.weeks.monthIndex + 1 } : {}),
+    });
     const { analysis } = card;
     const monthIndex = state.weeks?.monthIndex ?? analysis.primaryIndex;
+    const garland = garlandVideo(monthIndex);
     const leaves = mountFallingLeaves(
       { back: layers.back, front: layers.front },
       { month: monthIndex + 1, anchor: layers.card },
@@ -105,15 +142,16 @@ export const busiestMonthScreen: DemoScreen = {
     return {
       backdrop: monthBackdrop(monthIndex),
       copy: copyFor(analysis, state.weeks),
-      parts: [card, leaves],
+      parts: garland ? [card, leaves, garland.player] : [card, leaves],
       duration: card.duration,
       data,
       note: analysis.variant,
-      // The garland on the card's edge is the animator's MP4 in the app.
-      stills: GARLAND_STILLS[monthIndex] ?? [],
+      // The garland on the card's top edge: the animator's video where we have it, a still for the other months.
+      stills: garland ? [{ element: garland.player.element, ...garland.box }] : (GARLAND_STILLS[monthIndex] ?? []),
       destroy() {
         card.destroy();
         leaves.destroy();
+        garland?.player.destroy();
       },
     };
   },
