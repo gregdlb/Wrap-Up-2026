@@ -24,6 +24,8 @@ export interface DemoVideo extends Playable {
 
 /** Just inside the last frame: a seek to the very end may show nothing in some browsers. */
 const BEFORE_END_SECONDS = 0.01;
+/** A drawn frame this close to the end counts as the last one. */
+const LAST_FRAMES_SECONDS = 0.5;
 
 function source(src: string, type: string): HTMLSourceElement {
   const node = document.createElement('source');
@@ -65,14 +67,36 @@ export function mountVideo(sources: VideoSources, size: { width: number; height:
     video.addEventListener('error', done, { once: true });
     setTimeout(done, READY_TIMEOUT_SECONDS * 1000);
     if (still) {
+      // Safari can report the jump as done about a second before the frame is on screen,
+      // so where the browser can tell, the last frame must also have been drawn.
+      let jumped = false;
+      let drawn = typeof video.requestVideoFrameCallback !== 'function';
+      const settle = () => {
+        if (jumped && drawn) done();
+      };
       video.addEventListener(
         'loadedmetadata',
         () => {
-          video.currentTime = Math.max(video.duration - BEFORE_END_SECONDS, 0);
+          const end = Math.max(video.duration - BEFORE_END_SECONDS, 0);
+          const watch = () =>
+            video.requestVideoFrameCallback((_now, frame) => {
+              if (frame.mediaTime < end - LAST_FRAMES_SECONDS) return void watch();
+              drawn = true;
+              settle();
+            });
+          if (!drawn) watch();
+          video.currentTime = end;
         },
         { once: true },
       );
-      video.addEventListener('seeked', done, { once: true });
+      video.addEventListener(
+        'seeked',
+        () => {
+          jumped = true;
+          settle();
+        },
+        { once: true },
+      );
     } else {
       video.addEventListener('canplaythrough', done, { once: true });
     }

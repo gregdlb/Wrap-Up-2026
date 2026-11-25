@@ -755,8 +755,10 @@ video.load();                             // (phones only have a few)
 video.remove();
 ```
 
-Under `prefers-reduced-motion` the video never plays: it shows its last frame from the start. The demo does all
-of this in `demo/video.ts`.
+Under `prefers-reduced-motion` the video never plays: it shows its last frame from the start. On a first load
+Safari can fire `seeked` about a second before that frame is drawn; to hold the screen until it is, also wait
+for `video.requestVideoFrameCallback` to report a frame near the end. The demo does all of this in
+`demo/video.ts`.
 
 ### 03 Visits: the door
 
