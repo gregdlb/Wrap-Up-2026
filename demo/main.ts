@@ -79,6 +79,7 @@ const ui = {
   headline: byId('headline'),
   body: byId('body'),
   card: byId('card'),
+  stillsUnderText: byId('stills-under-text'),
   stillsBehind: byId('stills-behind'),
   stillsFront: byId('stills-front'),
   title: byId('title'),
@@ -293,8 +294,10 @@ function placeStills() {
     return box;
   };
 
-  ui.stillsBehind.replaceChildren(...stills.filter((still) => still.behind).map(render));
-  ui.stillsFront.replaceChildren(...stills.filter((still) => !still.behind).map(render));
+  const layerOf = (still: Still) => (still.underText ? ui.stillsUnderText : still.behind ? ui.stillsBehind : ui.stillsFront);
+  for (const layer of [ui.stillsUnderText, ui.stillsBehind, ui.stillsFront]) {
+    layer.replaceChildren(...stills.filter((still) => layerOf(still) === layer).map(render));
+  }
 }
 
 function showSeek(seconds: number) {
@@ -319,7 +322,7 @@ function render() {
   view?.destroy();
   screenTimeline?.kill();
 
-  for (const box of [ui.card, ui.stillsBehind, ui.stillsFront]) {
+  for (const box of [ui.card, ui.stillsUnderText, ui.stillsBehind, ui.stillsFront]) {
     Object.assign(box.style, {
       left: `${screen.cardBox.left}px`,
       right: `${screen.cardBox.right}px`,

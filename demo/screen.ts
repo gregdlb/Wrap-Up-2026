@@ -60,6 +60,8 @@ export interface Still {
   rotate?: number;
   /** Under the card instead of over it. */
   behind?: boolean;
+  /** Under the screen's text as well as the card: for a picture that is solid where the text is. */
+  underText?: boolean;
   opacity?: number;
   image?: string;
   /** For stills that are not a single image, e.g. a sticker. Built at Figma size; the shell scales it. */

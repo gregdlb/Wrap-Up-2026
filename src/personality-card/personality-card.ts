@@ -189,15 +189,13 @@ function countable(data: PersonalityCardData, locale: string): Countable {
 }
 
 /**
- * Seconds of the animator's scene video behind the card, for the types that have one. A screen whose video
- * plus the time on its last frame does not fit into 6 s lasts longer (The Early Bird, The Night Owl).
+ * Seconds of the animator's scene video behind the card, for the types whose video plays once and stays on its
+ * last frame. A screen whose video plus the time on that frame does not fit into 6 s lasts longer (The Early Bird).
+ * The other scene videos are loops: they repeat for as long as the screen is shown and do not change its length.
  */
 const SCENE_VIDEO_SECONDS: Partial<Record<string, number>> = {
   early_bird: 5.04,
-  night_owl: 5,
-  midday_hero: 3,
   rock: 3,
-  steady_one: 3,
 };
 
 /**

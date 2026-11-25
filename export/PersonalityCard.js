@@ -527,10 +527,7 @@ function countable(data, locale) {
 }
 var SCENE_VIDEO_SECONDS = {
   early_bird: 5.04,
-  night_owl: 5,
-  midday_hero: 3,
-  rock: 3,
-  steady_one: 3
+  rock: 3
 };
 function mountPersonalityCard(el, data, options = {}) {
   const { locale = "en-US", autoplay = false, onComplete, maxScale } = options;

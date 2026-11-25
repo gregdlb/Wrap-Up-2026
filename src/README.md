@@ -46,7 +46,7 @@ card.play();      // when the screen is in; all timings count from here
 | `pause()` | Freezes the animation, e.g. while the user holds the story. |
 | `seek(t)` | Jumps to `t` seconds. |
 | `destroy()` | Stops and removes the card from the container. |
-| `duration` | The length of the whole screen in seconds: `6`, or longer where the screen plays a long video of the animator (VisitsCount `8.5`; BusiestMonthCard in March `6.29` and April `6.04`; PersonalityCard `6.54` for The Early Bird and `6.5` for The Night Owl). Always read it from the card. The animation ends earlier, then the card holds. |
+| `duration` | The length of the whole screen in seconds: `6`, or longer where the screen plays a long video of the animator once (VisitsCount `8.5`; PersonalityCard `6.54` for The Early Bird). Always read it from the card. The animation ends earlier, then the card holds. |
 
 | Option | Default | |
 | --- | --- | --- |
@@ -231,7 +231,6 @@ The card picks its variant from the data:
 | `locale` | `'en-US'` | Month letters and number formatting. |
 | `labels` | `{ visit: 'visit', visits: 'visits', perMonth: 'a month' }` | Unit texts. |
 | `ariaLabel` | generated | Screen reader description of the card. |
-| `month` | the busiest month | Month of the screen's garland and leaves, `1` = January: the number FallingLeaves gets. It only sets `duration` (see below). Pass it with `weeks`, where the card shows weeks and cannot tell the month. |
 
 ### Returns
 
@@ -241,7 +240,7 @@ The card picks its variant from the data:
 | `pause()` | Freezes the animation, e.g. while the user holds the story. |
 | `seek(t)` | Jumps to `t` seconds. |
 | `destroy()` | Stops and removes the card from the container. |
-| `duration` | The length of the whole screen in seconds: `6`, but `6.29` in March and `6.04` in April, whose garland videos need the time (see "Videos from the animator"). The animation is done by 2.8 s, then the card holds. |
+| `duration` | `6`: the length of the whole screen in seconds. The animation is done by 2.8 s, then the card holds. |
 | `analysis` | `{ variant, highlighted, primaryIndex, value, unit, bars, max, average }`. Use it to pick the headline, copy and month theme. With several equal maxima `primaryIndex` is the latest one. |
 
 `analyzeBusiestMonthCard(data)` is also exported and returns the same analysis without mounting anything.
@@ -381,8 +380,8 @@ card.play();
 
 The stat card of screen 06. One component for all personality types: the layout is the same, the data differs.
 Frame 360 x 350, at `left: 0; top: 413px` on the Figma screen. The scene behind the card is the animator's video
-(see "Videos from the animator"); `duration` is `6.54` for `early_bird` and `6.5` for `night_owl`, whose videos
-need the time, and `6` for every other type.
+(see "Videos from the animator"); `duration` is `6.54` for `early_bird`, whose video needs the time, and `6`
+for every other type.
 
 | Data | Type | |
 | --- | --- | --- |
@@ -682,24 +681,27 @@ The element also carries `data-state="muted" | "unmuted"`.
 The animator's layers come as video with a transparent background. They are not components: the files are in
 `video/` of the repository (not in this folder) and the app embeds them itself, as described here.
 
-| Files (`.mov` and `.webm`) | Screen | Picture | Length | Screen lasts |
-| --- | --- | --- | --- | --- |
-| `03-visits-door` | 03 Visits | 760 x 1000 px | 7 s, 30 fps | 8.5 s |
-| `05-busiest-month-january` | 05, busiest month January | 760 x 420 px | 4 s, 24 fps | 6 s |
-| `05-busiest-month-february` | 05, February | 760 x 420 px | 2.63 s, 24 fps | 6 s |
-| `05-busiest-month-march` | 05, March | 760 x 420 px | 4.79 s, 24 fps | 6.29 s |
-| `05-busiest-month-april` | 05, April | 760 x 420 px | 4.54 s, 24 fps | 6.04 s |
-| `05-busiest-month-may` | 05, May | 760 x 420 px | 4 s, 24 fps | 6 s |
-| `06-personality-early-bird` | 06, The Early Bird | 1080 x 1080 px | 5.04 s, 24 fps | 6.54 s |
-| `06-personality-night-owl` | 06, The Night Owl | 1080 x 1080 px | 5 s, 24 fps | 6.5 s |
-| `06-personality-midday-hero` | 06, The Midday Hero | 1080 x 1080 px | 3 s, 24 fps | 6 s |
-| `06-personality-rock` | 06, The Rock | 1080 x 1080 px | 3 s, 24 fps | 6 s |
-| `06-personality-steady-one` | 06, The Steady One | 1080 x 1080 px | 3 s, 24 fps | 6 s |
+| Files (`.mov` and `.webm`) | Screen | Picture | Length | Plays | Screen lasts |
+| --- | --- | --- | --- | --- | --- |
+| `03-visits-door` | 03 Visits | 760 x 1000 px | 7 s, 30 fps | once | 8.5 s |
+| `05-busiest-month-january` | 05, busiest month January | 760 x 420 px | 4 s, 24 fps | loop | 6 s |
+| `05-busiest-month-february` | 05, February | 760 x 420 px | 2.63 s, 24 fps | loop | 6 s |
+| `05-busiest-month-march` | 05, March | 760 x 420 px | 4.79 s, 24 fps | loop | 6 s |
+| `05-busiest-month-april` | 05, April | 760 x 420 px | 4.54 s, 24 fps | loop | 6 s |
+| `05-busiest-month-may` | 05, May | 760 x 420 px | 4 s, 24 fps | loop | 6 s |
+| `06-personality-early-bird` | 06, The Early Bird | 1080 x 1080 px | 5.04 s, 24 fps | once | 6.54 s |
+| `06-personality-night-owl` | 06, The Night Owl | 1080 x 1080 px | 5 s, 24 fps | loop | 6 s |
+| `06-personality-midday-hero` | 06, The Midday Hero | 1080 x 1080 px | 3 s, 24 fps | loop | 6 s |
+| `06-personality-rock` | 06, The Rock | 1080 x 1080 px | 3 s, 24 fps | once | 6 s |
+| `06-personality-steady-one` | 06, The Steady One | 1080 x 1080 px | 3 s, 24 fps | loop | 6 s |
 
-None has sound; the files are 0.1–0.9 MB each. The months and personalities that are not listed have no video
+None has sound; the files are 0.1–1.3 MB each. The months and personalities that are not listed have no video
 yet and keep their still illustration.
 
-**Screen length.** A video plays once, to its end, and its last frame stays for 1.5 s. A screen where that does
+**Once or loop.** A video marked "loop" ends where it starts: it repeats for as long as its screen is shown and
+does not change the screen's length. A video marked "once" plays to its end and stays on its last frame.
+
+**Screen length.** After a video that plays once, its last frame stays for 1.5 s. A screen where that does
 not fit into 6 s lasts until then. The card of the screen knows: take the length from its `duration`
 (and `onComplete`), never from a fixed 6.
 
@@ -718,8 +720,8 @@ with alpha for Safari and iOS, the `.webm` is VP9 with alpha for Chrome, Android
   string, and goes on to the WebM. With another type on the first source (`video/mp4` alone, or
   `video/quicktime`) Chrome may take the HEVC file and show it on a black background.
 - `muted` and `playsinline` must be in the markup: without them iOS does not start the video by itself, or
-  opens it full screen. No `autoplay`, no `loop`, no `controls`: the app starts it, and a video without `loop`
-  stays on its last frame when it ends.
+  opens it full screen. No `autoplay`, no `controls`: the app starts it. Add `loop` to the videos marked "loop"
+  in the table and only to those: a video without `loop` stays on its last frame when it ends.
 - The server must answer byte-range requests, or Safari does not play the file.
 - The background of the `<video>` stays transparent; do not give it a color or a `poster`.
 
@@ -748,14 +750,15 @@ visits.play();
 if (!still) video.play().catch(() => {}); // play: together with the card, so both count from the same moment
 
 video.pause();                            // pause: with visits.pause(); video.play() resumes
-if (!still) video.currentTime = t;        // seek: with visits.seek(t)
+if (!still) video.currentTime = t;        // seek: with visits.seek(t); for a loop: t % video.duration
 
 video.replaceChildren();                  // when the screen is gone: stop, and free the decoder
 video.load();                             // (phones only have a few)
 video.remove();
 ```
 
-Under `prefers-reduced-motion` the video never plays: it shows its last frame from the start. On a first load
+Under `prefers-reduced-motion` the video never plays, a loop neither: it shows its last frame from the start.
+When a screen is played again from its start, set `video.currentTime = 0` before `video.play()`. On a first load
 Safari can fire `seeked` about a second before that frame is drawn; to hold the screen until it is, also wait
 for `video.requestVideoFrameCallback` to report a frame near the end. The demo does all of this in
 `demo/video.ts`.
@@ -805,7 +808,7 @@ are not all cut the same way, so each has its own box in the 360 x 350 frame of 
 
 Fit it like the door: multiply the box by the card's `fit` and add the card's offset in its container, with 360
 and 350 as the frame (`placeDoor` above, with these numbers). The garland is in the picture from the first
-frame; the video only makes it move.
+frame; the video only makes it move. All five are loops.
 
 ### 06 Clock-in personality: the scenes
 
@@ -820,11 +823,27 @@ The scene behind PersonalityCard. Each picture fills the Figma scene box: 400 x 
 | `rock` | 222 | -191 |
 | `steady_one` | 234 | -179 |
 
-Lay it **under** PersonalityCard. Unlike the stills, these pictures have the sky painted in: they are see-through
-only along their top and bottom edge, and solid from side to side. The sky has the colors of the screen's
-background, so it blends in, but the picture must reach both sides of the screen: it does when it is scaled
-with the card on a screen at least 360 px wide. If the card is scaled down (a short screen), scale the scene by
-the screen's width instead, or its cut sides will show.
+Unlike the stills, these pictures have the sky painted in: they are see-through only along their top and
+bottom edge and solid everywhere else, also where the headline and the body text are. So:
+
+- **Lay the video under PersonalityCard and under the screen's text** (tag, headline, body). In Figma the scene
+  layer is above the text, which only works for the see-through stills: a video placed there covers the body text
+  and washes out the highlighted name. The stills of the other types can stay where Figma has them.
+- **Fade its left and right edge** with a mask. The sky has the colors of the screen's background, so it blends
+  in, but the picture is cut straight at its sides, where the stills fade out over about 24 px:
+
+  ```css
+  .scene-video {
+    --fade: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+    -webkit-mask-image: var(--fade);
+    mask-image: var(--fade);
+  }
+  ```
+
+  Scaled with the card on a screen at least 360 px wide, the video reaches past both sides of the screen and the
+  fade is out of sight; it shows only where the card is scaled down (a short screen).
+
+`night_owl`, `midday_hero` and `steady_one` are loops; `early_bird` and `rock` play once.
 
 ### Making the files
 
@@ -832,12 +851,20 @@ The animator delivers ProRes 4444 with alpha (kept out of the repository in `vid
 HEVC file is made from the ProRes on a Mac:
 
 ```sh
-ffmpeg -i source.mov -map 0:v:0 -c:v hevc_videotoolbox -allow_sw 1 -alpha_quality 0.9 -q:v 62 -g 30 \
-  -tag:v hvc1 -pix_fmt bgra -movflags +faststart 03-visits-door.mov
+ffmpeg -i source.mov -map 0:v:0 -map_metadata -1 \
+  -vf "scale=out_color_matrix=bt709:out_range=tv:sws_dither=none,format=yuva420p,setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709" \
+  -c:v hevc_videotoolbox -allow_sw 1 -alpha_quality 0.9 -q:v 80 -g 24 -tag:v hvc1 -movflags +faststart \
+  06-personality-early-bird.mov
 ```
 
-This writes the colors as they are and marks them as premultiplied, which is what the animator's ProRes of the
-door and of the scenes holds. A ProRes with straight alpha (the garlands) needs
-`-vf format=gbrap12le,premultiply=inplace=1` as well. To tell which one a file is, compare a half-transparent
-pixel with the same pixel of the WebM, which holds straight alpha: equal colors mean straight, darker by the
-alpha means premultiplied. For 24 fps files use `-g 24`.
+- The encoder marks the colors as premultiplied, which is what the animator's ProRes of the door and of the
+  scenes holds. A ProRes with straight alpha (the garlands) needs `format=gbrap12le,premultiply=inplace=1,` at
+  the start of `-vf`. To tell which one a file is, compare a half-transparent pixel with the same pixel of the
+  WebM, which holds straight alpha: equal colors mean straight, darker by the alpha means premultiplied.
+- The `-vf` chain converts the colors itself and marks them BT.709. Handing the encoder RGB (`-pix_fmt bgra`)
+  instead shifts saturated colors by about 5 levels (the yellow tulips of April turned greenish).
+- `-g` is the frame rate (`30` for the door). `-q:v` is the quality: `80` for the scenes, which lose their fine
+  texture below that, `72` for the garlands. The door was made with `-pix_fmt bgra -q:v 62`.
+
+The pictures should be 3 px per Figma px, like the door and the garlands. The scenes are 1080 px for a 400 px
+box (2.7 px), so they are a little soft on a phone with a 3x screen: ask the animator for 1200 x 1200 px.

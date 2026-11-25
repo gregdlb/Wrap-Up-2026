@@ -5,13 +5,20 @@ import type { Playable } from './screen';
  * The animator's video on a demo screen, run like a component: `ready`, `play`, `pause`, `seek`,
  * and its last frame at once under `prefers-reduced-motion`.
  * The files have a transparent background: HEVC with alpha for Safari and iOS, WebM (VP9) with alpha
- * for the other browsers. It plays once and stays on its last frame.
+ * for the other browsers. It plays once and stays on its last frame, or repeats when it is a loop.
  */
 export interface VideoSources {
   /** HEVC with alpha in a `.mov`. */
   hevc: string;
   /** VP9 with alpha in a `.webm`. */
   webm: string;
+}
+
+export interface VideoOptions {
+  /** The video ends where it starts: repeat it for as long as the screen is shown. */
+  loop?: boolean;
+  /** Fade the left and right edge out over this many px, for a picture that is solid up to its sides. */
+  softSides?: number;
 }
 
 export interface DemoVideo extends Playable {
@@ -35,13 +42,19 @@ function source(src: string, type: string): HTMLSourceElement {
 }
 
 /** Builds the `<video>` at `size` (CSS px). It does not start until `play()`. */
-export function mountVideo(sources: VideoSources, size: { width: number; height: number }): DemoVideo {
+export function mountVideo(
+  sources: VideoSources,
+  size: { width: number; height: number },
+  options: VideoOptions = {},
+): DemoVideo {
+  const { loop = false, softSides = 0 } = options;
   const video = document.createElement('video');
   // Attributes, not only properties: iOS reads `muted` and `playsinline` from the markup.
   video.muted = true;
   video.defaultMuted = true;
   video.playsInline = true;
   video.setAttribute('playsinline', '');
+  video.loop = loop;
   video.preload = 'auto';
   video.disablePictureInPicture = true;
   video.disableRemotePlayback = true;
@@ -50,6 +63,11 @@ export function mountVideo(sources: VideoSources, size: { width: number; height:
   video.className = 'demo-video';
   video.style.width = `${size.width}px`;
   video.style.height = `${size.height}px`;
+  if (softSides > 0) {
+    const fade = `linear-gradient(to right, transparent, #000 ${softSides}px, #000 calc(100% - ${softSides}px), transparent)`;
+    video.style.setProperty('-webkit-mask-image', fade);
+    video.style.setProperty('mask-image', fade);
+  }
 
   // The order matters. Safari takes the first one. A browser that plays HEVC but not its alpha (Chrome)
   // turns the bare "hvc1" down, because it only accepts a full codec string, and goes on to the WebM.
@@ -121,8 +139,11 @@ export function mountVideo(sources: VideoSources, size: { width: number; height:
     },
     seek(t) {
       if (destroyed || still) return;
-      const end = Number.isFinite(video.duration) ? video.duration - BEFORE_END_SECONDS : t;
-      video.currentTime = Math.min(Math.max(t, 0), end);
+      const seconds = Math.max(t, 0);
+      if (!Number.isFinite(video.duration)) video.currentTime = seconds;
+      // A loop is as far into its current round as the screen's time says.
+      else if (loop) video.currentTime = seconds % video.duration;
+      else video.currentTime = Math.min(seconds, video.duration - BEFORE_END_SECONDS);
     },
     destroy() {
       if (destroyed) return;

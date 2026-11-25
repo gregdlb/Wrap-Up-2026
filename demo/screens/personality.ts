@@ -50,21 +50,31 @@ const videoFiles = import.meta.glob<string>('../../video/06-personality-*', { ea
 /**
  * The animator's scene videos, by personality; the other types keep their still.
  * Each picture is 1080 x 1080 px and fills the 400 x 400 box of the Figma scene.
+ * A `loop` repeats for as long as the screen is shown; the others play once and stay on their last frame.
  */
-const SCENE_VIDEOS: Record<string, string> = {
-  early_bird: 'early-bird',
-  night_owl: 'night-owl',
-  midday_hero: 'midday-hero',
-  rock: 'rock',
-  steady_one: 'steady-one',
+const SCENE_VIDEOS: Record<string, { file: string; loop: boolean }> = {
+  early_bird: { file: 'early-bird', loop: false },
+  night_owl: { file: 'night-owl', loop: true },
+  midday_hero: { file: 'midday-hero', loop: true },
+  rock: { file: 'rock', loop: false },
+  steady_one: { file: 'steady-one', loop: true },
 };
+
+/**
+ * The scene videos are solid up to their left and right edge, where the stills fade out over about this many
+ * Figma px. The same fade, as a mask, keeps a cut side from showing where the scene is narrower than the screen.
+ */
+const SCENE_SOFT_SIDES = 24;
 
 /** The scene video of a personality at the size of its Figma box, or null for a type that has none. */
 function sceneVideo(look: PersonalityLook) {
-  const name = SCENE_VIDEOS[look.key];
-  if (!name) return null;
-  const file = (extension: string) => videoFiles[`../../video/06-personality-${name}.${extension}`] ?? '';
-  return mountVideo({ hevc: file('mov'), webm: file('webm') }, look.scene);
+  const video = SCENE_VIDEOS[look.key];
+  if (!video) return null;
+  const file = (extension: string) => videoFiles[`../../video/06-personality-${video.file}.${extension}`] ?? '';
+  return mountVideo({ hevc: file('mov'), webm: file('webm') }, look.scene, {
+    loop: video.loop,
+    softSides: SCENE_SOFT_SIDES,
+  });
 }
 
 let typeKey = 'early_bird';
@@ -141,7 +151,13 @@ export const personalityScreen: DemoScreen = {
       data,
       note: `${look.name} · ${values.type}`,
       // The scene behind the card: the animator's video where we have it, a still for the other types.
-      stills: [scene ? { element: scene.element, ...sceneBox } : { image: file(look.scene.file), ...sceneBox }],
+      // The videos have the sky painted in up to the headline and the body text, so they go under the text;
+      // the stills are see-through there and stay where Figma has them, above it.
+      stills: [
+        scene
+          ? { element: scene.element, ...sceneBox, underText: true }
+          : { image: file(look.scene.file), ...sceneBox },
+      ],
       destroy() {
         card.destroy();
         scene?.destroy();

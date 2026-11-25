@@ -53,6 +53,7 @@ const videoFiles = import.meta.glob<string>('../../video/05-busiest-month-*', { 
 
 /**
  * The animator's garland videos, by month index (0 = January); the other months keep their still.
+ * Each one is a loop: it repeats for as long as the screen is shown.
  * Every picture is 760 x 420 px. `x`, `y` is where its corner goes in the 360 x 350 "Months card" frame and
  * `perFigmaPx` how many video px make one Figma px, both measured so that the garland of the last frame lies
  * on the Figma garland (the snowman and the heart included). The pictures are not all cut the same way.
@@ -77,7 +78,7 @@ function garlandVideo(monthIndex: number) {
     height: GARLAND_PICTURE.height / video.perFigmaPx,
   };
   const file = (extension: string) => videoFiles[`../../video/05-busiest-month-${video.file}.${extension}`] ?? '';
-  return { box, player: mountVideo({ hevc: file('mov'), webm: file('webm') }, box) };
+  return { box, player: mountVideo({ hevc: file('mov'), webm: file('webm') }, box, { loop: true }) };
 }
 
 export const busiestMonthScreen: DemoScreen = {
@@ -89,11 +90,7 @@ export const busiestMonthScreen: DemoScreen = {
 
   render({ layers, controls, rerender, replay }) {
     const data = toData(state.visitsPerMonth, state.weeks?.weeks);
-    // With weeks on the card, the app tells it the month: the screen's length depends on the month's garland video.
-    const card = mountBusiestMonthCard(layers.card, data, {
-      onComplete: replay,
-      ...(state.weeks ? { month: state.weeks.monthIndex + 1 } : {}),
-    });
+    const card = mountBusiestMonthCard(layers.card, data, { onComplete: replay });
     const { analysis } = card;
     const monthIndex = state.weeks?.monthIndex ?? analysis.primaryIndex;
     const garland = garlandVideo(monthIndex);
