@@ -1,5 +1,8 @@
 # Wrap Up 2026 components
 
+**Live demo: https://wrap-up-2026.vercel.app**
+In the screen list, "00 Full story" plays the whole story, and 01 to 11 show one screen each, with its settings.
+
 Animated, data-driven pieces of the Brevy "Wrap Up 2026" story. Copy this folder into the app as it is.
 
 | File | Screen | What it is |
@@ -1020,3 +1023,14 @@ ffmpeg -i source.mov -map 0:v:0 -map_metadata -1 \
 The pictures are 3 px per Figma px: 760 x 420 for a garland of 253.33 x 140, 1080 x 1080 for a scene of
 360 x 360, 1080 x 2346 for the whole 360 x 782 screen of 01.
 
+## Run locally
+
+To run the demo on your own machine, take the whole repository (this folder is only its `export/`). It needs
+[Bun](https://bun.sh):
+
+```sh
+bun install
+bun run dev          # demo at http://localhost:5173
+```
+
+After a change in `src/`, `bun run build` regenerates this folder.

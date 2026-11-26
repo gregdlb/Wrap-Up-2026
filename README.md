@@ -1,5 +1,8 @@
 # Wrap Up 2026
 
+**Live demo: https://wrap-up-2026.vercel.app**
+In the screen list, "00 Full story" plays the whole story, and 01 to 11 show one screen each, with its settings.
+
 Animated, data-driven components for the Brevy "Wrap Up 2026" story: the cards, counters, falling pieces and the
 money rain. Framework-agnostic TypeScript with GSAP as the only dependency.
 
@@ -28,9 +31,9 @@ card.play();      // when the screen is in; all timings count from here
 Every component returns `{ ready, play, pause, seek, destroy, duration }`, has a transparent background, scales to
 its container like `object-fit: contain`, and shows its final state at once under `prefers-reduced-motion`.
 
-## Running the demo
+## Run locally
 
-Requires [Bun](https://bun.sh).
+For developers who work on the components or the demo. Requires [Bun](https://bun.sh).
 
 ```sh
 bun install
