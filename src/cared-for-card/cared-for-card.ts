@@ -1,6 +1,6 @@
 import { createCardShell, element } from '../shared/card';
 import { createController, holdTimeline, type WrapUpController, type WrapUpOptions } from '../shared/controller';
-import { addCounter, SCREEN_SECONDS } from '../shared/counter';
+import { addCounter, screenSeconds } from '../shared/counter';
 import { observeSize } from '../shared/fit';
 import { trackImages } from '../shared/images';
 import { addStickerPop, createSticker, heartUrl } from '../shared/sticker';
@@ -166,6 +166,12 @@ function formatDay(date: string, locale: string): string | null {
 }
 
 /**
+ * Seconds of the animator's video of the hands behind the card. It plays once and stays on its last frame,
+ * and the screen lasts until it has ended and that frame has stayed for a moment: 6.5 s.
+ */
+const HANDS_VIDEO_SECONDS = 5;
+
+/**
  * Mounts the 08 "Who you cared for" pieces: the name rows into `targets.names` (the headline area)
  * and the sticker into `targets.sticker` (over the hands illustration). One controller runs both.
  *
@@ -184,7 +190,7 @@ export function mountCaredForCard(
   const numberFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
   const format = (value: number) => numberFormat.format(Math.round(value));
   const visitsLabel = (count: number) => (count === 1 ? labels.visit : labels.visits);
-  const timeline = holdTimeline(SCREEN_SECONDS);
+  const timeline = holdTimeline(screenSeconds(HANDS_VIDEO_SECONDS));
 
   ensureStyles('cared-for-card', STYLES);
   const names = element('wu-cared-for-names');

@@ -1,14 +1,21 @@
 import { mountHoursClock } from '../../src';
 import { randomInt, type DemoScreen } from '../screen';
+import { mountVideo } from '../video';
 
 let hours = 1011;
 
-const asset = (name: string) => new URL(`../assets/screens/04/${name}`, import.meta.url).href;
-const arc = asset('arc.svg');
-const mountains = asset('mountains.png');
-const orbit = asset('orbit.png');
-const sun = asset('sun.png');
-const moon = asset('moon.png');
+const arc = new URL('../assets/screens/04/arc.svg', import.meta.url).href;
+
+/** The animator's video of the sun and the moon over the mountains: a loop, with the screen's background painted in. */
+const SKY = {
+  hevc: new URL('../../video/04-hours-sun-moon.mov', import.meta.url).href,
+  webm: new URL('../../video/04-hours-sun-moon.webm', import.meta.url).href,
+};
+/**
+ * The picture is 1080 x 1200 px, 3 per Figma px: a 360 x 400 window of the screen with its top 300.67 px down
+ * (measured against the Figma layers). Here in the 236 x 236 frame of the clock, which is at left 62, top 489.
+ */
+const SKY_BOX = { x: -62, y: 300.67 - 489, width: 360, height: 400 };
 
 export const hoursScreen: DemoScreen = {
   id: '04',
@@ -20,6 +27,7 @@ export const hoursScreen: DemoScreen = {
   render({ layers, controls, rerender, replay }) {
     const data = { fullDays: Math.floor(hours / 24), hours };
     const card = mountHoursClock(layers.card, data, { onComplete: replay });
+    const sky = mountVideo(SKY, SKY_BOX, { loop: true });
 
     const update = (next: number) => {
       hours = next;
@@ -56,17 +64,16 @@ export const hoursScreen: DemoScreen = {
         ],
         body: `That’s ${data.fullDays} full days, side by side.`,
       },
-      parts: [card],
+      parts: [card, sky],
       duration: card.duration,
       data,
-      // Sun, moon, the dotted orbit and the mountains are the animator's MP4; here they stand still.
-      stills: [
-        { image: mountains, x: -62, y: -87, width: 360, height: 300, behind: true, opacity: 0.4 },
-        { image: orbit, x: -32, y: -99, width: 300, height: 150, behind: true },
-        { image: sun, x: -28, y: -95, width: 72, height: 72, behind: true },
-        { image: moon, x: 194, y: -93, width: 68, height: 68, behind: true },
-      ],
-      destroy: () => card.destroy(),
+      // Sun, moon, orbit and mountains are the animator's video. It is solid where the body text is and where
+      // the background arc passes, and Figma has this layer below both, so it goes under the arc.
+      stills: [{ element: sky.element, ...SKY_BOX, underArc: true, softSides: 24 }],
+      destroy() {
+        card.destroy();
+        sky.destroy();
+      },
     };
   },
 };

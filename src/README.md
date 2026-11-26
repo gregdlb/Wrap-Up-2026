@@ -46,7 +46,7 @@ card.play();      // when the screen is in; all timings count from here
 | `pause()` | Freezes the animation, e.g. while the user holds the story. |
 | `seek(t)` | Jumps to `t` seconds. |
 | `destroy()` | Stops and removes the card from the container. |
-| `duration` | The length of the whole screen in seconds: `6`, or longer where the screen plays a long video of the animator once (VisitsCount `8.5`; BusiestMonthCard `6.5` in March; PersonalityCard `6.54` for The Early Bird). Always read it from the card. The animation ends earlier, then the card holds. |
+| `duration` | The length of the whole screen in seconds: `6`, or longer where the screen plays a long video of the animator once (VisitsCount `8.5`; BusiestMonthCard `6.5` in March; PersonalityCard `6.54` for The Early Bird; CaredForCard `6.5`). Always read it from the card. The animation ends earlier, then the card holds. |
 
 | Option | Default | |
 | --- | --- | --- |
@@ -439,6 +439,9 @@ const card = mountCaredForCard({ names: namesSlot, sticker: handsContainer }, { 
 card.play();
 ```
 
+**This screen lasts 6.5 s, not 6:** the animator's video of the hands behind the card is 5 s long and plays
+once (see "Videos from the animator"); `duration` is `6.5` and `onComplete` fires then.
+
 Screen 08 has its data in two places, so this card takes two elements instead of one container:
 
 - `names`: a slot in the headline, under the tag. The rows with the highlighted names are drawn here. The block
@@ -701,9 +704,16 @@ The animator's layers come as video with a transparent background. They are not 
 | `06-personality-marathoner` | 06, The Marathoner | 1080 x 1080 px | 5 s | loop | 6 s |
 | `06-personality-weekend-warrior` | 06, Weekend Warrior | 1080 x 1080 px | 5 s | loop | 6 s |
 | `06-personality-juggler` | 06, The Juggler | 1080 x 1080 px | 5 s | loop | 6 s |
+| `01-welcome-gift` | 01, the gift paper | 1080 x 2346 px | 1.33 s, 30 fps | once | 10 s for the whole of 01 |
+| `01-what-a-year` | 01, "What a year" and 2026 | 1080 x 2346 px | 4.33 s, 30 fps | once | |
+| `01-with-brevy` | 01, the Brevy logo | 1080 x 2346 px | 6.97 s, 30 fps | once | |
+| `04-hours-sun-moon` | 04 Hours | 1080 x 1200 px | 5 s, 24 fps | loop | 6 s |
+| `07-weeks-stones` | 07 Weeks in a row | 1080 x 640 px | 3.71 s, 24 fps | loop | 6 s |
+| `08-cared-for-hands` | 08 Who you cared for | 760 x 1000 px | 5 s, 24 fps | once | 6.5 s |
+| `10-top-caregiver-summit` | 10 Top caregiver | 1080 x 1080 px | 4 s, 24 fps | loop | 6 s |
 
-None has sound; the files are 0.1–1.6 MB each. Every month of 05 and every personality of 06 has its video.
-All pictures are 3 video px per Figma px.
+None has sound; the files are 0.1–1.6 MB each, except `01-what-a-year` (4.8 MB as `.mov`, 3.7 MB as `.webm`).
+Every month of 05 and every personality of 06 has its video. All pictures are 3 video px per Figma px.
 
 **Once or loop.** A video marked "loop" ends where it starts: it repeats for as long as its screen is shown and
 does not change the screen's length. A video marked "once" plays to its end and stays on its last frame.
@@ -769,6 +779,78 @@ When a screen is played again from its start, set `video.currentTime = 0` before
 Safari can fire `seeked` about a second before that frame is drawn; to hold the screen until it is, also wait
 for `video.requestVideoFrameCallback` to report a frame near the end. The demo does all of this in
 `demo/video.ts`.
+
+### 01 Welcome · What a year · with Brevy: the intro
+
+Screen 01 plays as one, without a tap: three videos, each as large as the 360 x 782 screen, laid one over the
+other on the emerald-500 background (`#023620`) and started one after the other. Order and times are those of
+the animator's reference video of the whole intro:
+
+| Layer, bottom to top | Starts at | What it shows |
+| --- | --- | --- |
+| `01-with-brevy` | 4.07 s (frame 122 of 30 a second) | The Brevy logo draws itself, the wordmark and the arc come in. Still from 8.4 s. |
+| `01-what-a-year` | 0.67 s (frame 20) | "What a year", 2026 and the confetti; they fly out at about 3.8–4.2 s. Empty at its start and from 4.2 s. |
+| `01-welcome-gift` | 0 s | The gift paper. The bow unties and the paper tears open at 0.5–1.0 s, showing the layer under it. Empty from 1.0 s. |
+
+- **The intro lasts 10 s**, as the reference does; the last video has stood still for 1.6 s by then (its file
+  holds the still picture for one more second).
+- Fit each video like the background: `width: 100%; height: 100%; object-fit: cover`, centered. On a screen
+  shorter than 360:782 its top and bottom are cut.
+- Start each video at its time on one clock. To seek to `t`, set each video's `currentTime` to `t` minus its
+  start: before its start a video stays on its first frame, after its end on its last one (both empty for the
+  first two). When the intro starts over, pause a video that is still running before you rewind it.
+- With `prefers-reduced-motion` only the last frame of `01-with-brevy` shows: the logo.
+- **Texts and header come from Figma, not from the videos**, with one exception: "What a year" is part of the
+  `01-what-a-year` picture and cannot be changed. On the gift (frame "01 Welcome · Gift") there are "2026"
+  (Rethink Sans ExtraBold 72 px, yellow-300, at left 16, top 120) and "Psst, Maria. / Your year is ready /
+  to unwrap" (Rethink Sans Medium 16 px, line height 1.3, beige-50, at left 18, top 222), with the user's name.
+  The demo fades them in over the first 0.3 s and out at 0.55–0.85 s, while the paper opens; the header (logo,
+  SoundButton, Close) leaves with them, because the Figma frames 01b and 01c have none. 01 has no progress bar.
+- The animator's `01 Confetti` (the confetti alone) and `01 Full_1` (the whole intro as one video with a
+  transparent background) are not used: the confetti is already in `01-what-a-year`, and the three parts give
+  the same picture as `01 Full_1`.
+
+### 04 Hours: sun and moon
+
+A loop with the screen's background painted in: sun and moon travel along the dotted orbit over the mountains.
+The picture is a 360 x 400 window of the screen: `left: 0; top: 300.67px` on the Figma screen, which is
+`left: -62px; top: -188.33px` in the 236 x 236 frame of HoursClock (at `left: 62px; top: 489px`). Fit it like the
+door, with the clock's `fit`. Lay it **under the background arc** and under the text: it is solid where the body
+text and the arc are, and Figma has this layer below both. Fade its sides as for the scenes of 06 where it does
+not span the screen.
+
+### 07 Weeks in a row: the path
+
+A loop with the screen's background painted in: the path of stepping stones. The picture is a 360 x 213.33
+window of the screen: `left: 0; top: 315.67px` on the Figma screen, `top: -97.33px` in the 360 x 350 frame of
+WeeksCard. Lay it under WeeksCard and **under the screen's text**. The picture is cut at its bottom, which shows
+until the card has come in, so fade the bottom 64 px out (in Figma px: multiply by the card's `fit`):
+
+```css
+.path-video {
+  --fade: linear-gradient(to bottom, #000 calc(100% - 64px), transparent);
+  -webkit-mask-image: var(--fade);
+  mask-image: var(--fade);
+}
+```
+
+Where the video does not span the screen, fade its sides too, as for the scenes of 06; with both masks set
+`mask-composite: intersect` (`-webkit-mask-composite: source-in`).
+
+### 08 Who you cared for: the hands
+
+The arch card with the two hands, with a transparent background, cut like the door of 03: 760 x 1000 px for
+253.33 x 333.33, at `left: 53.33px; top: 11.67px` of the 360 x 360 frame of CaredForCard's sticker container
+(`left: 0; top: 415px` on the Figma screen). Nothing shows at first; the card comes in and the hands close
+until 3.6 s, then the picture stands still. It plays once, and the screen lasts 6.5 s (`duration` of
+CaredForCard). Lay it under the container, so the "Since …" sticker stays above it.
+
+### 10 Top caregiver: the summit
+
+A loop with the screen's emerald painted in: the glow pulses, the flag waves, the stars twinkle. The picture is
+a 360 x 360 window of the screen: `left: 0; top: 306px` on the Figma screen, `top: -107px` in the 360 x 350
+frame of TopCaregiverCard. Lay it under the card and **under the screen's text**, and fade its sides as for the
+scenes of 06 where it does not span the screen.
 
 ### 03 Visits: the door
 
@@ -900,9 +982,20 @@ ffmpeg -i source.mov -map 0:v:0 -map_metadata -1 \
 - The `-vf` chain converts the colors itself and marks them BT.709 with the **sRGB** transfer curve. Handing
   the encoder RGB (`-pix_fmt bgra`) instead shifts saturated colors by about 5 levels, and marking the curve
   BT.709 makes Safari and iOS show the mid-tones up to 10 levels lighter than Chrome shows the WebM.
-- `-g` is the frame rate (`30` for the door). `-q:v` is the quality: `80` for the scenes, which lose their fine
-  texture below that, `72` for the garlands and the door.
+- `-g` is the frame rate (`30` for the door and for 01). `-q:v` is the quality: `80` for the scenes and for
+  04, 07 and 10, which lose their fine texture below that, `72` for the garlands, the door, the hands and 01.
+- For 07, 08 and 10 the animator's WebM has another canvas than the ProRes (1080 x 1200, the picture centered
+  in it, and for 08 also enlarged 1.2 times), so their WebM was made from the ProRes to match the `.mov`:
+
+  ```sh
+  ffmpeg -i source.mov -map 0:v:0 -map_metadata -1 \
+    -vf "format=gbrap12le,setparams=alpha_mode=premultiplied,unpremultiply=inplace=1,scale=out_color_matrix=bt709:out_range=tv:sws_dither=none,format=yuva420p,setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709" \
+    -c:v libvpx-vp9 -crf 24 -b:v 0 -row-mt 1 -auto-alt-ref 0 -g 24 07-weeks-stones.webm
+  ```
+
+  A WebM holds straight alpha. `setparams=alpha_mode=premultiplied` tells ffmpeg what the ProRes really holds;
+  without it `unpremultiply` does nothing and the soft edges come out dark.
 
 The pictures are 3 px per Figma px: 760 x 420 for a garland of 253.33 x 140, 1080 x 1080 for a scene of
-360 x 360.
+360 x 360, 1080 x 2346 for the whole 360 x 782 screen of 01.
 

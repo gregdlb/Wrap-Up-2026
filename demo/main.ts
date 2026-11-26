@@ -13,6 +13,7 @@ import { busiestMonthScreen } from './screens/busiest-month';
 import { caredForScreen } from './screens/cared-for';
 import { firstVisitScreen } from './screens/first-visit';
 import { hoursScreen } from './screens/hours';
+import { introScreen } from './screens/intro';
 import { payScreen } from './screens/pay';
 import { thankYouScreen } from './screens/thank-you';
 import { topCaregiverScreen } from './screens/top-caregiver';
@@ -23,6 +24,7 @@ import './demo.css';
 
 /** Screens in story order. */
 const SCREENS: DemoScreen[] = [
+  introScreen,
   firstVisitScreen,
   visitsScreen,
   hoursScreen,
@@ -79,6 +81,8 @@ const ui = {
   headline: byId('headline'),
   body: byId('body'),
   card: byId('card'),
+  header: document.querySelector<HTMLElement>('.header')!,
+  stillsUnderArc: byId('stills-under-arc'),
   stillsUnderText: byId('stills-under-text'),
   stillsBehind: byId('stills-behind'),
   stillsFront: byId('stills-front'),
@@ -244,7 +248,7 @@ function renderCopy(copy: ScreenCopy, backdrop: Backdrop) {
  * The host's part of the screen (spec rows "Text in", "Highlight behind word", story progress).
  * The progress segment fills over the whole screen, whose length is the card's `duration`.
  */
-function buildScreenTimeline(step: number, screenSeconds: number): gsap.core.Timeline {
+function buildScreenTimeline(step: number, screenSeconds: number, headerOut?: ScreenView['headerOut']): gsap.core.Timeline {
   const textRows = [ui.tag, ...ui.headline.querySelectorAll('.headline__row:not(.headline__row--slot)'), ui.body];
   const currentFill = ui.progress.children[step]?.firstElementChild ?? null;
   const highlights = ui.headline.querySelectorAll('.headline__highlight-box');
@@ -255,6 +259,10 @@ function buildScreenTimeline(step: number, screenSeconds: number): gsap.core.Tim
     .fromTo(currentFill, { width: '0%' }, { width: '100%', duration: screenSeconds, ease: 'none' }, 0);
   if (highlights.length > 0) {
     timeline.fromTo(highlights, { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: 'power2.inOut' }, 0.3);
+  }
+  gsap.set(ui.header, { opacity: 1 });
+  if (headerOut) {
+    timeline.fromTo(ui.header, { opacity: 1 }, { opacity: 0, duration: headerOut.seconds, ease: 'none' }, headerOut.at);
   }
   return timeline;
 }
@@ -269,6 +277,9 @@ function placeStills() {
   const scale = Math.min(width / screen.frame.width, height / screen.frame.height, MAX_SCALE);
   const left = (width - screen.frame.width * scale) / 2;
   const top = (height - screen.frame.height * scale) / 2;
+  // The card's box may be narrower than the screen (04): where it starts on the screen, and the screen's width.
+  const screenLeft = screen.cardBox.left;
+  const screenWidth = ui.screen.clientWidth;
 
   const render = (still: Still) => {
     const box = document.createElement('div');
@@ -291,18 +302,30 @@ function placeStills() {
       node.style.transform = `rotate(${still.rotate ?? 0}deg) scale(${scale})`;
       box.append(node);
     }
+    const fades: string[] = [];
     if (still.softSides) {
-      // The card's box spans the screen, so its width is the screen's.
-      const reachesSides = left + still.x * scale <= 0.5 && left + (still.x + still.width) * scale >= width - 0.5;
-      const fade = `linear-gradient(to right, transparent, #000 ${still.softSides * scale}px, #000 calc(100% - ${still.softSides * scale}px), transparent)`;
-      box.style.setProperty('-webkit-mask-image', reachesSides ? 'none' : fade);
-      box.style.setProperty('mask-image', reachesSides ? 'none' : fade);
+      // Only where the picture does not reach both sides of the screen (`screenLeft` and `screenWidth` are the screen's).
+      const boxLeft = screenLeft + left + still.x * scale;
+      const reachesSides = boxLeft <= 0.5 && boxLeft + still.width * scale >= screenWidth - 0.5;
+      const size = still.softSides * scale;
+      if (!reachesSides) fades.push(`linear-gradient(to right, transparent, #000 ${size}px, #000 calc(100% - ${size}px), transparent)`);
+    }
+    if (still.softBottom) {
+      fades.push(`linear-gradient(to bottom, #000 calc(100% - ${still.softBottom * scale}px), transparent)`);
+    }
+    if (fades.length > 0) {
+      box.style.setProperty('-webkit-mask-image', fades.join(', '));
+      box.style.setProperty('mask-image', fades.join(', '));
+      // Several fades: the picture shows only where every one of them lets it through.
+      box.style.setProperty('-webkit-mask-composite', 'source-in');
+      box.style.setProperty('mask-composite', 'intersect');
     }
     return box;
   };
 
-  const layerOf = (still: Still) => (still.underText ? ui.stillsUnderText : still.behind ? ui.stillsBehind : ui.stillsFront);
-  for (const layer of [ui.stillsUnderText, ui.stillsBehind, ui.stillsFront]) {
+  const layerOf = (still: Still) =>
+    still.underArc ? ui.stillsUnderArc : still.underText ? ui.stillsUnderText : still.behind ? ui.stillsBehind : ui.stillsFront;
+  for (const layer of [ui.stillsUnderArc, ui.stillsUnderText, ui.stillsBehind, ui.stillsFront]) {
     layer.replaceChildren(...stills.filter((still) => layerOf(still) === layer).map(render));
   }
 }
@@ -329,7 +352,7 @@ function render() {
   view?.destroy();
   screenTimeline?.kill();
 
-  for (const box of [ui.card, ui.stillsUnderText, ui.stillsBehind, ui.stillsFront]) {
+  for (const box of [ui.card, ui.stillsUnderArc, ui.stillsUnderText, ui.stillsBehind, ui.stillsFront]) {
     Object.assign(box.style, {
       left: `${screen.cardBox.left}px`,
       right: `${screen.cardBox.right}px`,
@@ -354,7 +377,8 @@ function render() {
   renderProgress(screen.step);
   renderCopy(view.copy, view.backdrop);
   placeStills();
-  screenTimeline = buildScreenTimeline(screen.step, view.duration);
+  ui.progress.style.visibility = view.hideProgress ? 'hidden' : '';
+  screenTimeline = buildScreenTimeline(screen.step, view.duration, view.headerOut);
 
   ui.seek.max = String(view.duration);
   ui.note.textContent = view.note ?? '';

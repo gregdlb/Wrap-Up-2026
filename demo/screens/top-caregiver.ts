@@ -1,10 +1,21 @@
 import { mountTopCaregiverCard } from '../../src';
 import type { DemoScreen } from '../screen';
-import { summit } from '../stills';
+import { mountVideo } from '../video';
 
 let state = { topPercent: 10 };
 
 const arc = new URL('../assets/screens/10/arc.svg', import.meta.url).href;
+
+/** The animator's video of the summit with its glow and flag: a loop, with the screen's emerald painted in. */
+const SUMMIT = {
+  hevc: new URL('../../video/10-top-caregiver-summit.mov', import.meta.url).href,
+  webm: new URL('../../video/10-top-caregiver-summit.webm', import.meta.url).href,
+};
+/**
+ * The picture is 1080 x 1080 px, 3 per Figma px: a 360 x 360 window of the screen with its top 306 px down
+ * (measured against the Figma picture). Here in the card's frame, which is at top 413.
+ */
+const SUMMIT_BOX = { x: 0, y: 306 - 413, width: 360, height: 360 };
 
 export const topCaregiverScreen: DemoScreen = {
   id: '10',
@@ -17,6 +28,7 @@ export const topCaregiverScreen: DemoScreen = {
     // Without `distribution` the card draws the curve from Figma.
     const data = { topPercent: state.topPercent };
     const card = mountTopCaregiverCard(layers.card, data, { onComplete: replay });
+    const summit = mountVideo(SUMMIT, SUMMIT_BOX, { loop: true });
 
     const update = (next: Partial<typeof state>) => {
       state = { ...state, ...next };
@@ -61,13 +73,17 @@ export const topCaregiverScreen: DemoScreen = {
         ],
         body: 'Ranked by hours of care in 2026.',
       },
-      parts: [card],
+      parts: [card, summit],
       duration: card.duration,
       data,
       note: `${card.topBars} top bar${card.topBars === 1 ? '' : 's'}`,
-      // The glowing summit behind the card is the animator's MP4.
-      stills: [{ node: summit, x: -60, y: -87, width: 480, height: 320, behind: true }],
-      destroy: () => card.destroy(),
+      // The glowing summit behind the card is the animator's video. It is solid where the body text is,
+      // so it goes under the text.
+      stills: [{ element: summit.element, ...SUMMIT_BOX, underText: true, softSides: 24 }],
+      destroy() {
+        card.destroy();
+        summit.destroy();
+      },
     };
   },
 };

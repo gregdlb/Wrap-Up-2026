@@ -255,6 +255,10 @@ function addCounter(timeline, node, target, options) {
   timeline.fromTo(count, { value: from }, { value: target, duration, ease }, at);
 }
 var SCREEN_SECONDS = 6;
+var VIDEO_HOLD_SECONDS = 1.5;
+function screenSeconds(videoSeconds = 0) {
+  return Math.max(SCREEN_SECONDS, Math.round((videoSeconds + VIDEO_HOLD_SECONDS) * 100) / 100);
+}
 
 // src/shared/text.ts
 var NBSP = " ";
@@ -415,6 +419,7 @@ function formatDay(date, locale) {
   const day = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
   return new Intl.DateTimeFormat(locale, { month: "long", day: "numeric", timeZone: "UTC" }).format(day);
 }
+var HANDS_VIDEO_SECONDS = 5;
 function mountCaredForCard(targets, data, options = {}) {
   const { locale = "en-US", autoplay = false, onComplete, maxScale, assetBaseUrl } = options;
   const labels = { ...DEFAULT_LABELS, ...options.labels };
@@ -423,7 +428,7 @@ function mountCaredForCard(targets, data, options = {}) {
   const numberFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
   const format = (value) => numberFormat.format(Math.round(value));
   const visitsLabel = (count) => count === 1 ? labels.visit : labels.visits;
-  const timeline = holdTimeline(SCREEN_SECONDS);
+  const timeline = holdTimeline(screenSeconds(HANDS_VIDEO_SECONDS));
   ensureStyles("cared-for-card", STYLES);
   const names = element("wu-cared-for-names");
   const counts = [];

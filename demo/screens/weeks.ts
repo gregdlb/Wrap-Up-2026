@@ -1,5 +1,6 @@
 import { mountWeeksCard } from '../../src';
 import { randomInt, type DemoScreen } from '../screen';
+import { mountVideo } from '../video';
 
 interface State {
   totalWeeks: number;
@@ -11,7 +12,19 @@ interface State {
 let state: State = { totalWeeks: 48, weeksInARow: 31, earlier: [10, 11, 13, 14, 16] };
 
 const arc = new URL('../assets/screens/07/arc.svg', import.meta.url).href;
-const path = new URL('../assets/screens/07/path.png', import.meta.url).href;
+
+/** The animator's video of the path with the stepping stones: a loop, with the screen's background painted in. */
+const PATH = {
+  hevc: new URL('../../video/07-weeks-stones.mov', import.meta.url).href,
+  webm: new URL('../../video/07-weeks-stones.webm', import.meta.url).href,
+};
+/**
+ * The picture is 1080 x 640 px, 3 per Figma px: a 360 x 213.33 window of the screen with its top 315.67 px down
+ * (measured against the Figma picture). Here in the card's frame, which is at top 413.
+ */
+const PATH_BOX = { x: 0, y: 315.67 - 413, width: 360, height: 640 / 3 };
+/** The picture is cut at its bottom, which shows until the card has come in: it fades out over this many Figma px. */
+const PATH_SOFT_BOTTOM = 64;
 
 /** Month a week of 2026 falls in, counting weeks from 1 January; `dayOfWeek` 1 is its first day, 4 its middle. */
 function monthOfWeek(index: number, dayOfWeek: number): string {
@@ -34,6 +47,7 @@ export const weeksScreen: DemoScreen = {
     );
     const data = { weeksInARow: state.weeksInARow, totalWeeks: state.totalWeeks, weeks };
     const card = mountWeeksCard(layers.card, data, { onComplete: replay });
+    const path = mountVideo(PATH, PATH_BOX, { loop: true });
 
     const update = (next: Partial<State>) => {
       state = { ...state, ...next };
@@ -90,12 +104,16 @@ export const weeksScreen: DemoScreen = {
         body: `At least one visit every week, from ${monthOfWeek(card.streak.start, 1)} to ${monthOfWeek(card.streak.end, 4)}.`,
         bodyWidth: 263,
       },
-      parts: [card],
+      parts: [card, path],
       duration: card.duration,
       data,
-      // The path with the stones behind the card is the animator's MP4.
-      stills: [{ image: path, x: -30, y: -79, width: 420, height: 177, behind: true }],
-      destroy: () => card.destroy(),
+      // The path with the stones behind the card is the animator's video. It is solid where the body text is,
+      // so it goes under the text.
+      stills: [{ element: path.element, ...PATH_BOX, underText: true, softSides: 24, softBottom: PATH_SOFT_BOTTOM }],
+      destroy() {
+        card.destroy();
+        path.destroy();
+      },
     };
   },
 };

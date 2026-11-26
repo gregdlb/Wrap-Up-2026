@@ -62,11 +62,15 @@ export interface Still {
   behind?: boolean;
   /** Under the screen's text as well as the card: for a picture that is solid where the text is. */
   underText?: boolean;
+  /** Under the background arc too, where Figma has the picture below the arc. */
+  underArc?: boolean;
   /**
    * For a picture that is cut straight at its left and right edge: where it does not reach both sides of the
    * screen, those edges fade out over this many Figma px.
    */
   softSides?: number;
+  /** The bottom edge fades out over this many Figma px, for a picture that is cut at its bottom. */
+  softBottom?: number;
   opacity?: number;
   image?: string;
   /** For stills that are not a single image, e.g. a sticker. Built at Figma size; the shell scales it. */
@@ -105,6 +109,10 @@ export interface ScreenView {
   /** Shown next to "Variant", when the component derives one. */
   note?: string;
   stills?: Still[];
+  /** The story's progress bar is not shown on this screen (the intro). */
+  hideProgress?: boolean;
+  /** The header (logo, sound, close) fades out from `at` over `seconds`: Figma has none on the later part of the intro. */
+  headerOut?: { at: number; seconds: number };
   /** False for screens that wait for the user (the scratch card): the shell then does not loop. */
   loops?: boolean;
   destroy(): void;
