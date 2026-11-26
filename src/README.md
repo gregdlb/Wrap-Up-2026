@@ -799,6 +799,9 @@ the animator's reference video of the whole intro:
 - Start each video at its time on one clock. To seek to `t`, set each video's `currentTime` to `t` minus its
   start: before its start a video stays on its first frame, after its end on its last one (both empty for the
   first two). When the intro starts over, pause a video that is still running before you rewind it.
+- The three files weigh 7 MB together, so have them on the device before the intro starts. Over a network,
+  fetch them in the order they are needed (the gift first), and let the clock lead: a video that is behind it
+  jumps to the clock's position, or is skipped if its time has passed, so the paper never opens over the logo.
 - With `prefers-reduced-motion` only the last frame of `01-with-brevy` shows: the logo.
 - **Texts and header come from Figma, not from the videos**, with one exception: "What a year" is part of the
   `01-what-a-year` picture and cannot be changed. On the gift (frame "01 Welcome · Gift") there are "2026"

@@ -26,6 +26,10 @@ const TEXT = { in: { at: 0, seconds: 0.3, stagger: 0.08, offsetY: 12 }, out: { a
 
 let name = 'Maria';
 
+/** A video this far behind the clock is put where the clock is, once this much of it has arrived beyond that point. */
+const LATE_SECONDS = 0.3;
+const CATCH_UP_BUFFER_SECONDS = 0.5;
+
 interface Step {
   video: DemoVideo;
   at: number;
@@ -40,6 +44,29 @@ function sequence(steps: Step[], seconds: number, build: (clock: gsap.core.Timel
   clock.to({}, { duration: seconds }, 0);
   for (const step of steps) {
     if (step.at > 0) clock.call(() => step.video.play(), undefined, step.at);
+    // The clock leads. A video that is behind it (still downloading when its time came) jumps to where the
+    // clock is as soon as that part has arrived, or to its end if its time has passed, so the layers never
+    // run out of step: the gift paper must not open over the logo.
+    const element = step.video.element;
+    const catchUp = () => {
+      const due = clock.time() - step.at;
+      const length = element.duration;
+      if (clock.paused() || !Number.isFinite(length) || due - element.currentTime < LATE_SECONDS) return;
+      if (element.currentTime >= length - 0.05) return;
+      if (due >= length - 0.05) {
+        step.video.pause();
+        step.video.seek(length);
+        return;
+      }
+      for (let i = 0; i < element.buffered.length; i++) {
+        if (element.buffered.start(i) <= due && due + CATCH_UP_BUFFER_SECONDS <= element.buffered.end(i)) {
+          element.currentTime = due;
+          return;
+        }
+      }
+    };
+    element.addEventListener('playing', catchUp);
+    element.addEventListener('timeupdate', catchUp);
   }
   build(clock);
 
@@ -89,11 +116,21 @@ export const introScreen: DemoScreen = {
 
     const steps = PARTS.map(({ file, at }) => {
       const url = (extension: string) => videoFiles[`../../video/01-${file}.${extension}`] ?? '';
-      const video = mountVideo({ hevc: url('mov'), webm: url('webm') }, { width: 360, height: 782 });
+      // Only the gift paper, which the screen opens with, is fetched at once; see below.
+      const video = mountVideo({ hevc: url('mov'), webm: url('webm') }, { width: 360, height: 782 }, { deferLoad: at > 0 });
       // Like the background: it covers the screen, keeps its proportions and stays centered.
       Object.assign(video.element.style, { width: '100%', height: '100%' });
       root.append(video.element);
       return { video, at };
+    });
+
+    // The files are large (7 MB in all), so they are fetched in the order they are needed: each one once the
+    // one shown before it can play through (or cannot be played). One that is still waiting when its time
+    // comes starts to load then.
+    const inOrder = [...steps].sort((a, b) => a.at - b.at);
+    inOrder.forEach((step, index) => {
+      const before = inOrder[index - 1]?.video.element;
+      for (const event of ['canplaythrough', 'error']) before?.addEventListener(event, () => step.video.load(), { once: true });
     });
 
     // The texts of the Figma frame "01 Welcome · Gift", over the paper. The name is the user's.

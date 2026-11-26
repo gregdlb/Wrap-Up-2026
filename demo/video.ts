@@ -17,12 +17,16 @@ export interface VideoSources {
 export interface VideoOptions {
   /** The video ends where it starts: repeat it for as long as the screen is shown. */
   loop?: boolean;
+  /** Do not download the file yet; `load()` starts it. For a screen with several videos, to fetch the first one first. */
+  deferLoad?: boolean;
 }
 
 export interface DemoVideo extends Playable {
   /** Place it on the screen; its size is the one passed to `mountVideo`. */
   element: HTMLVideoElement;
   ready: Promise<void>;
+  /** Starts the download of a video mounted with `deferLoad`. */
+  load(): void;
   /** Stops the video, frees its decoder and removes the element. */
   destroy(): void;
 }
@@ -45,7 +49,7 @@ export function mountVideo(
   size: { width: number; height: number },
   options: VideoOptions = {},
 ): DemoVideo {
-  const { loop = false } = options;
+  const { loop = false, deferLoad = false } = options;
   const video = document.createElement('video');
   // Attributes, not only properties: iOS reads `muted` and `playsinline` from the markup.
   video.muted = true;
@@ -53,7 +57,7 @@ export function mountVideo(
   video.playsInline = true;
   video.setAttribute('playsinline', '');
   video.loop = loop;
-  video.preload = 'auto';
+  video.preload = deferLoad ? 'none' : 'auto';
   video.disablePictureInPicture = true;
   video.disableRemotePlayback = true;
   video.setAttribute('aria-hidden', 'true');
@@ -69,6 +73,8 @@ export function mountVideo(
 
   const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let destroyed = false;
+  /** Whether the download has been asked for: at once, by `load()` or by the first `play()`. */
+  let fetching = !deferLoad;
 
   // Resolves when the video can play through (reduced motion: when its last frame is shown).
   // Also when it cannot be played, or does not load in time: the screen must not wait forever.
@@ -121,6 +127,9 @@ export function mountVideo(
       if (destroyed || still) return;
       gate.whenOpen(() => {
         if (destroyed) return;
+        // Playing a deferred video starts its download; a later `load()` must not start it over.
+        fetching = true;
+        video.preload = 'auto';
         if (video.ended) video.currentTime = 0;
         // A start that a pause or the next screen interrupts rejects; that is not an error.
         video.play().catch(() => undefined);
@@ -137,6 +146,12 @@ export function mountVideo(
       // A loop is as far into its current round as the screen's time says.
       else if (loop) video.currentTime = seconds % video.duration;
       else video.currentTime = Math.min(seconds, video.duration - BEFORE_END_SECONDS);
+    },
+    load() {
+      if (destroyed || fetching) return;
+      fetching = true;
+      video.preload = 'auto';
+      video.load();
     },
     destroy() {
       if (destroyed) return;
