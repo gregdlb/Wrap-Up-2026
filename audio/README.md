@@ -5,7 +5,7 @@ It is demo material: the app chooses its own music.
 
 | File | Track | Author | License | Source |
 | --- | --- | --- | --- | --- |
-| `happy-music.mp3` | Happy – Happy Music, 8 dB quieter (what the demo plays) | MaksymMalko (Maksym Malko) | Pixabay Content License | https://pixabay.com/music/happy-childrens-tunes-happy-happy-music-635286/ |
+| `happy-music.mp3` | Happy – Happy Music, 8 dB quieter and without the silence at its start (0.44 s) and end (1 s), so that it loops without a pause (what the demo plays, 59.06 s) | MaksymMalko (Maksym Malko) | Pixabay Content License | https://pixabay.com/music/happy-childrens-tunes-happy-happy-music-635286/ |
 | `maksymmalko-happy-happy-music-635286.mp3` | The same track as downloaded from Pixabay (60.5 s) | MaksymMalko (Maksym Malko) | Pixabay Content License | as above |
 | `shine-blitz.mp3` | Shine Blitz, 8 dB quieter (the demo's first track, no longer played) | zesona | CC0 1.0 | https://opengameart.org/content/shine-blitz |
 

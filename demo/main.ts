@@ -36,9 +36,7 @@ const SCREENS: DemoScreen[] = [
   topCaregiverScreen,
   thankYouScreen,
 ];
-const DEFAULT_SCREEN = introScreen.id;
-
-/** The whole story, 01 to 11, one screen after the other: an entry of the screen list, not a screen. */
+/** The whole story, 01 to 11, one screen after the other: an entry of the screen list, not a screen. The demo opens with it. */
 const STORY = { id: '00', label: '00 Full story' };
 /** In the full story a screen that waits for the user goes on by itself after this many seconds. */
 const STORY_WAIT_SECONDS = 3;
@@ -158,9 +156,9 @@ music.addEventListener('pause', () => {
   waitForTouch();
 });
 
-let screen: DemoScreen = SCREENS.find((candidate) => candidate.id === DEFAULT_SCREEN)!;
+let screen: DemoScreen = SCREENS[0]!;
 /** True while "00 Full story" is chosen: the screens follow one another instead of looping. */
-let story = false;
+let story = true;
 let storyTimer = 0;
 let view: ScreenView | null = null;
 let screenTimeline: gsap.core.Timeline | null = null;
@@ -467,7 +465,7 @@ function applyDevice() {
 }
 
 ui.screenSelect.replaceChildren(...[STORY, ...SCREENS].map(({ id, label }) => new Option(label, id)));
-ui.screenSelect.value = screen.id;
+ui.screenSelect.value = STORY.id;
 ui.device.replaceChildren(
   ...DEVICES.map(({ name, width, height }, index) => new Option(`${name} (${width} × ${height})`, String(index))),
 );
