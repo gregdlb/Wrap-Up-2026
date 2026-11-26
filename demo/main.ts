@@ -36,7 +36,15 @@ const SCREENS: DemoScreen[] = [
   topCaregiverScreen,
   thankYouScreen,
 ];
-const DEFAULT_SCREEN = busiestMonthScreen.id;
+const DEFAULT_SCREEN = introScreen.id;
+
+/** The whole story, 01 to 11, one screen after the other: an entry of the screen list, not a screen. */
+const STORY = { id: '00', label: '00 Full story' };
+/** In the full story a screen that waits for the user goes on by itself after this many seconds. */
+const STORY_WAIT_SECONDS = 3;
+
+/** The demo's music. See audio/README.md for the track and its license. */
+const MUSIC = { src: new URL('../audio/shine-blitz.mp3', import.meta.url).href, volume: 0.6 };
 
 const PROGRESS_SEGMENTS = 12;
 
@@ -81,7 +89,7 @@ const ui = {
   headline: byId('headline'),
   body: byId('body'),
   card: byId('card'),
-  header: document.querySelector<HTMLElement>('.header')!,
+  logo: document.querySelector<HTMLElement>('.header > img')!,
   stillsUnderArc: byId('stills-under-arc'),
   stillsUnderText: byId('stills-under-text'),
   stillsBehind: byId('stills-behind'),
@@ -98,22 +106,53 @@ const ui = {
 };
 
 /**
+ * The demo's music: one looping track for every screen, muted and unmuted with the SoundButton.
+ * A browser only lets sound start after the user has touched the page (always so on an iPhone),
+ * so it starts with the first tap, click or key, wherever that is.
+ */
+const music = byId<HTMLAudioElement>('music');
+music.src = MUSIC.src;
+music.volume = MUSIC.volume;
+let musicStarted = false;
+
+/**
  * The mute button of the header, mounted once: its state stays while the screens change.
- * The demo plays no music; `onChange` is where the app mutes or unmutes its own.
+ * `onChange` is where the app mutes or unmutes its music; the demo does the same with its track.
  */
 let soundChanges = 0;
-const showSound = (muted: boolean) => {
-  ui.soundState.textContent = `${muted ? 'muted' : 'unmuted'} · onChange called ${soundChanges}×`;
+const showSound = () => {
+  const playing = musicStarted ? (sound.muted ? 'music muted' : 'music playing') : 'music starts with your first tap or key';
+  ui.soundState.textContent = `${sound.muted ? 'muted' : 'unmuted'} · onChange called ${soundChanges}× · ${playing}`;
 };
 const sound = mountSoundButton(ui.sound, {
   onChange: (muted) => {
     soundChanges += 1;
-    showSound(muted);
+    music.muted = muted;
+    showSound();
   },
 });
-showSound(sound.muted);
+showSound();
+
+const FIRST_TOUCH_EVENTS = ['pointerdown', 'touchend', 'click', 'keydown'] as const;
+function startMusic() {
+  if (musicStarted) return;
+  music.muted = sound.muted;
+  music
+    .play()
+    .then(() => {
+      musicStarted = true;
+      for (const event of FIRST_TOUCH_EVENTS) window.removeEventListener(event, startMusic, true);
+      showSound();
+    })
+    // Refused: no touch yet. The next one tries again.
+    .catch(() => undefined);
+}
+for (const event of FIRST_TOUCH_EVENTS) window.addEventListener(event, startMusic, true);
 
 let screen: DemoScreen = SCREENS.find((candidate) => candidate.id === DEFAULT_SCREEN)!;
+/** True while "00 Full story" is chosen: the screens follow one another instead of looping. */
+let story = false;
+let storyTimer = 0;
 let view: ScreenView | null = null;
 let screenTimeline: gsap.core.Timeline | null = null;
 /** Counts renders, so a screen that finished loading after the next one was chosen does not start. */
@@ -248,7 +287,7 @@ function renderCopy(copy: ScreenCopy, backdrop: Backdrop) {
  * The host's part of the screen (spec rows "Text in", "Highlight behind word", story progress).
  * The progress segment fills over the whole screen, whose length is the card's `duration`.
  */
-function buildScreenTimeline(step: number, screenSeconds: number, headerOut?: ScreenView['headerOut']): gsap.core.Timeline {
+function buildScreenTimeline(step: number, screenSeconds: number, logoOut?: ScreenView['logoOut']): gsap.core.Timeline {
   const textRows = [ui.tag, ...ui.headline.querySelectorAll('.headline__row:not(.headline__row--slot)'), ui.body];
   const currentFill = ui.progress.children[step]?.firstElementChild ?? null;
   const highlights = ui.headline.querySelectorAll('.headline__highlight-box');
@@ -260,9 +299,9 @@ function buildScreenTimeline(step: number, screenSeconds: number, headerOut?: Sc
   if (highlights.length > 0) {
     timeline.fromTo(highlights, { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: 'power2.inOut' }, 0.3);
   }
-  gsap.set(ui.header, { opacity: 1 });
-  if (headerOut) {
-    timeline.fromTo(ui.header, { opacity: 1 }, { opacity: 0, duration: headerOut.seconds, ease: 'none' }, headerOut.at);
+  gsap.set(ui.logo, { opacity: 1 });
+  if (logoOut) {
+    timeline.fromTo(ui.logo, { opacity: 1 }, { opacity: 0, duration: logoOut.seconds, ease: 'none' }, logoOut.at);
   }
   return timeline;
 }
@@ -344,6 +383,22 @@ function play() {
   view.parts.forEach((part) => part.play());
 }
 
+/** In the full story: the screen's time is up, so the next one comes. The last one, 11, stays as it ended. */
+function advance() {
+  const next = SCREENS[SCREENS.indexOf(screen) + 1];
+  if (!next) return;
+  screen = next;
+  render();
+}
+
+/** The full story from its first screen, with the music from its start. */
+function startStory() {
+  story = true;
+  screen = SCREENS[0]!;
+  music.currentTime = 0;
+  render();
+}
+
 /**
  * Rebuilds the current screen with its current sample data.
  * Only the background shows until every image is loaded; then the screen appears whole and plays.
@@ -351,6 +406,7 @@ function play() {
 function render() {
   view?.destroy();
   screenTimeline?.kill();
+  window.clearTimeout(storyTimer);
 
   for (const box of [ui.card, ui.stillsUnderArc, ui.stillsUnderText, ui.stillsBehind, ui.stillsFront]) {
     Object.assign(box.style, {
@@ -363,13 +419,16 @@ function render() {
 
   view = screen.render({
     layers: { back: ui.layerBack, card: ui.card, front: ui.layerFront },
-    controls: createControls(ui.controls),
+    // The full story has no data switches: the screens show their current sample data.
+    controls: createControls(story ? document.createElement('div') : ui.controls),
     rerender: render,
-    replay: play,
+    replay: story ? advance : play,
     updateCopy: (copy) => view && renderCopy(copy, view.backdrop),
   });
 
-  ui.title.textContent = screen.label;
+  if (story) ui.controls.replaceChildren();
+  ui.title.textContent = story ? `${STORY.label} · ${screen.label}` : screen.label;
+  ui.seek.closest<HTMLElement>('.field')!.style.display = story ? 'none' : '';
   ui.screen.style.background = `linear-gradient(to bottom, ${view.backdrop.background[0]}, ${view.backdrop.background[1]})`;
   ui.screen.classList.toggle('screen--dark', view.backdrop.dark === true);
   sound.setTone(view.backdrop.dark ? 'dark' : 'light');
@@ -377,8 +436,8 @@ function render() {
   renderProgress(screen.step);
   renderCopy(view.copy, view.backdrop);
   placeStills();
-  ui.progress.style.visibility = view.hideProgress ? 'hidden' : '';
-  screenTimeline = buildScreenTimeline(screen.step, view.duration, view.headerOut);
+  ui.progress.style.visibility = view.hideProgress && !story ? 'hidden' : '';
+  screenTimeline = buildScreenTimeline(screen.step, view.duration, view.logoOut);
 
   ui.seek.max = String(view.duration);
   ui.note.textContent = view.note ?? '';
@@ -395,6 +454,7 @@ function render() {
     if (current !== renderCount) return;
     ui.screen.classList.remove('screen--loading');
     play();
+    if (story && view?.skipWait) storyTimer = window.setTimeout(() => view?.skipWait?.(), STORY_WAIT_SECONDS * 1000);
   });
 }
 
@@ -406,7 +466,7 @@ function applyDevice() {
   ui.stage.style.setProperty('--fit', String(Math.max(0.5, fit)));
 }
 
-ui.screenSelect.replaceChildren(...SCREENS.map(({ id, label }) => new Option(label, id)));
+ui.screenSelect.replaceChildren(...[STORY, ...SCREENS].map(({ id, label }) => new Option(label, id)));
 ui.screenSelect.value = screen.id;
 ui.device.replaceChildren(
   ...DEVICES.map(({ name, width, height }, index) => new Option(`${name} (${width} × ${height})`, String(index))),
@@ -414,11 +474,14 @@ ui.device.replaceChildren(
 ui.device.value = String(DEFAULT_DEVICE);
 
 ui.screenSelect.addEventListener('change', () => {
+  if (ui.screenSelect.value === STORY.id) return startStory();
+  story = false;
   screen = SCREENS.find((candidate) => candidate.id === ui.screenSelect.value) ?? screen;
   render();
 });
 ui.device.addEventListener('change', applyDevice);
-ui.replay.addEventListener('click', play);
+// Replay: the screen from its start, or the whole story from 01.
+ui.replay.addEventListener('click', () => (story ? startStory() : play()));
 ui.seek.addEventListener('input', () => {
   const seconds = Number(ui.seek.value);
   showSeek(seconds);

@@ -104,6 +104,7 @@ export const payScreen: DemoScreen = {
       duration: card.duration,
       data,
       note: 'waits for the scratch, then resumes',
+      skipWait: () => card.reveal(),
       // The note under the card is the app's.
       stills: [{ node: privateNote, x: 0, y: 236, width: 324, height: 36 }],
       destroy() {

@@ -704,7 +704,7 @@ The animator's layers come as video with a transparent background. They are not 
 | `06-personality-marathoner` | 06, The Marathoner | 1080 x 1080 px | 5 s | loop | 6 s |
 | `06-personality-weekend-warrior` | 06, Weekend Warrior | 1080 x 1080 px | 5 s | loop | 6 s |
 | `06-personality-juggler` | 06, The Juggler | 1080 x 1080 px | 5 s | loop | 6 s |
-| `01-welcome-gift` | 01, the gift paper | 1080 x 2346 px | 1.33 s, 30 fps | once | 10 s for the whole of 01 |
+| `01-welcome-gift` (and `.jpg`, its first frame) | 01, the gift paper | 1080 x 2346 px | 1.33 s, 30 fps | once | 11.5 s for the whole of 01 |
 | `01-what-a-year` | 01, "What a year" and 2026 | 1080 x 2346 px | 4.33 s, 30 fps | once | |
 | `01-with-brevy` | 01, the Brevy logo | 1080 x 2346 px | 6.97 s, 30 fps | once | |
 | `04-hours-sun-moon` | 04 Hours | 1080 x 1200 px | 5 s, 24 fps | loop | 6 s |
@@ -784,16 +784,20 @@ for `video.requestVideoFrameCallback` to report a frame near the end. The demo d
 
 Screen 01 plays as one, without a tap: three videos, each as large as the 360 x 782 screen, laid one over the
 other on the emerald-500 background (`#023620`) and started one after the other. Order and times are those of
-the animator's reference video of the whole intro:
+the animator's reference video of the whole intro, after a pause of 1.5 s on the gift paper:
 
 | Layer, bottom to top | Starts at | What it shows |
 | --- | --- | --- |
-| `01-with-brevy` | 4.07 s (frame 122 of 30 a second) | The Brevy logo draws itself, the wordmark and the arc come in. Still from 8.4 s. |
-| `01-what-a-year` | 0.67 s (frame 20) | "What a year", 2026 and the confetti; they fly out at about 3.8–4.2 s. Empty at its start and from 4.2 s. |
-| `01-welcome-gift` | 0 s | The gift paper. The bow unties and the paper tears open at 0.5–1.0 s, showing the layer under it. Empty from 1.0 s. |
+| `01-with-brevy` | 5.57 s (1.5 s + frame 122 of 30 a second) | The Brevy logo draws itself, the wordmark and the arc come in. Still from 9.9 s. |
+| `01-what-a-year` | 2.17 s (1.5 s + frame 20) | "What a year", 2026 and the confetti; they fly out at about 5.3–5.7 s. Empty at its start and from 5.7 s. |
+| `01-welcome-gift` | 1.5 s | The gift paper. The bow unties and the paper tears open at 2.0–2.5 s, showing the layer under it. Empty from 2.5 s. |
 
-- **The intro lasts 10 s**, as the reference does; the last video has stood still for 1.6 s by then (its file
-  holds the still picture for one more second).
+- **The pause.** For the first 1.5 s the gift paper stands still, so that the text on it can be read (the
+  animator's video opens at once). A phone draws nothing of a video that has not played yet, so the first frame
+  is in `video/` as a picture, `01-welcome-gift.jpg`: lay it right under the gift video, fitted the same way,
+  and hide it once the video shows frames of its own.
+- **The intro lasts 11.5 s**: the pause and the 10 s of the reference. The last video has stood still for 1.6 s
+  by then (its file holds the still picture for one more second).
 - Fit each video like the background: `width: 100%; height: 100%; object-fit: cover`, centered. On a screen
   shorter than 360:782 its top and bottom are cut.
 - Start each video at its time on one clock. To seek to `t`, set each video's `currentTime` to `t` minus its
@@ -808,8 +812,10 @@ the animator's reference video of the whole intro:
   `01-what-a-year` picture and cannot be changed. On the gift (frame "01 Welcome · Gift") there are "2026"
   (Rethink Sans ExtraBold 72 px, yellow-300, at left 16, top 120) and "Psst, Maria. / Your year is ready /
   to unwrap" (Rethink Sans Medium 16 px, line height 1.3, beige-50, at left 18, top 222), with the user's name.
-  The demo fades them in over the first 0.3 s and out at 0.55–0.85 s, while the paper opens; the header (logo,
-  SoundButton, Close) leaves with them, because the Figma frames 01b and 01c have none. 01 has no progress bar.
+  The demo fades them in over the first 0.3 s and out at 2.05–2.35 s, while the paper opens.
+- **SoundButton and Close stay for the whole intro**, where they are on every screen. The Brevy logo of the
+  header leaves with the texts (the intro ends with its own large logo). 01 has no progress bar in Figma;
+  the demo shows it only in the full story.
 - The animator's `01 Confetti` (the confetti alone) and `01 Full_1` (the whole intro as one video with a
   transparent background) are not used: the confetti is already in `01-what-a-year`, and the three parts give
   the same picture as `01 Full_1`.

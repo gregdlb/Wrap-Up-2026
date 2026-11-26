@@ -109,10 +109,12 @@ export interface ScreenView {
   /** Shown next to "Variant", when the component derives one. */
   note?: string;
   stills?: Still[];
-  /** The story's progress bar is not shown on this screen (the intro). */
+  /** The story's progress bar is not shown on this screen (the intro), except in the full story. */
   hideProgress?: boolean;
-  /** The header (logo, sound, close) fades out from `at` over `seconds`: Figma has none on the later part of the intro. */
-  headerOut?: { at: number; seconds: number };
+  /** The logo of the header fades out from `at` over `seconds` (the intro: its own logo comes later). Sound and Close stay. */
+  logoOut?: { at: number; seconds: number };
+  /** For a screen that waits for the user (the scratch card): go on as if they had acted. The full story calls it. */
+  skipWait?: () => void;
   /** False for screens that wait for the user (the scratch card): the shell then does not loop. */
   loops?: boolean;
   destroy(): void;

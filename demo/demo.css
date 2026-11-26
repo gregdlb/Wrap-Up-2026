@@ -334,6 +334,11 @@ body {
   position: absolute;
 }
 
+/* A screen without a card (01) leaves the box empty: it must not take the taps meant for the header. */
+#card:empty {
+  pointer-events: none;
+}
+
 /* Stills of the animator's layers, placed piece by piece onto the card's fitted frame. */
 .stills {
   pointer-events: none;
@@ -369,10 +374,13 @@ body {
   overflow: hidden;
 }
 
-.intro .demo-video {
+.intro .demo-video,
+.intro__paper {
   position: absolute;
   left: 0;
   top: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
