@@ -40,9 +40,13 @@ const SCREENS: DemoScreen[] = [
 const STORY = { id: '00', label: '00 Full story' };
 /** In the full story a screen that waits for the user goes on by itself after this many seconds. */
 const STORY_WAIT_SECONDS = 3;
+/** The story waits this long for the music to start with it, then goes without it. */
+const MUSIC_PATIENCE_SECONDS = 3;
 
 /** The demo's music. See audio/README.md for the track and its license. */
 const MUSIC = { src: new URL('../audio/happy-music.mp3', import.meta.url).href, volume: 0.6 };
+/** The first frame of the gift paper of 01: the picture of the start screen. */
+const START_PICTURE = new URL('../video/01-welcome-gift.jpg', import.meta.url).href;
 
 const PROGRESS_SEGMENTS = 12;
 
@@ -88,6 +92,7 @@ const ui = {
   body: byId('body'),
   card: byId('card'),
   logo: document.querySelector<HTMLElement>('.header > img')!,
+  start: byId<HTMLButtonElement>('start'),
   stillsUnderArc: byId('stills-under-arc'),
   stillsUnderText: byId('stills-under-text'),
   stillsBehind: byId('stills-behind'),
@@ -105,61 +110,86 @@ const ui = {
 
 /**
  * The demo's music: one looping track for every screen, muted and unmuted with the SoundButton.
- * A browser only lets sound start after the user has touched the page (always so on an iPhone),
- * so it starts with the first tap, click or key, wherever that is.
+ *
+ * A browser only lets sound start after the user has touched the page (always so on an iPhone), and the
+ * system can stop it at any time (a media key, a call, leaving the tab on a phone). So the SoundButton
+ * never shows more than is true: it shows "unmuted" only while the music is really sounding. What the user
+ * asked for is kept apart, in `musicWanted`, and the music is brought back to that whenever the page may:
+ * when the story starts or restarts, when the tab comes back, and on a tap on the button itself.
  */
 const music = byId<HTMLAudioElement>('music');
 music.src = MUSIC.src;
 music.volume = MUSIC.volume;
-let musicStarted = false;
+/** The user's choice: true until they mute, true again when they unmute. */
+let musicWanted = true;
+/** The demo paused the music because the tab went into the background, and will resume it. */
+let pausedForBackground = false;
+
+const musicSounds = () => !music.paused && !music.muted && music.error === null;
 
 /**
  * The mute button of the header, mounted once: its state stays while the screens change.
  * `onChange` is where the app mutes or unmutes its music; the demo does the same with its track.
  */
 let soundChanges = 0;
-const showSound = () => {
-  const playing = musicStarted ? (sound.muted ? 'music muted' : 'music playing') : 'music starts with your first tap or key';
-  ui.soundState.textContent = `${sound.muted ? 'muted' : 'unmuted'} · onChange called ${soundChanges}× · ${playing}`;
-};
 const sound = mountSoundButton(ui.sound, {
   onChange: (muted) => {
     soundChanges += 1;
+    musicWanted = !muted;
     music.muted = muted;
+    // Unmuting is a tap, so the music may start here even where it was held back or stopped from outside.
+    if (musicWanted) void playMusic();
     showSound();
   },
 });
+
+/** Shows the button and the panel as the music really is. */
+function showSound() {
+  const sounds = musicSounds();
+  if (sound.muted === sounds) sound.setMuted(!sounds);
+  const why = sounds
+    ? 'music playing'
+    : !musicWanted
+      ? 'music muted'
+      : music.paused
+        ? 'music not playing (held back or stopped by the browser): tap the button'
+        : 'music muted';
+  ui.soundState.textContent = `${sound.muted ? 'muted' : 'unmuted'} · onChange called ${soundChanges}× · ${why}`;
+}
+
+/**
+ * Starts or resumes the music. Resolves to "playing" when it sounds (or runs muted), "blocked" when the browser
+ * wants a tap first, and "failed" when the track cannot be played at all.
+ */
+function playMusic(): Promise<'playing' | 'blocked' | 'failed'> {
+  music.muted = !musicWanted;
+  if (!music.paused) return Promise.resolve('playing');
+  return music.play().then(
+    () => 'playing' as const,
+    (error: unknown) => ((error as DOMException | null)?.name === 'NotAllowedError' ? ('blocked' as const) : ('failed' as const)),
+  );
+}
+
+for (const event of ['play', 'playing', 'pause', 'volumechange', 'error'] as const) music.addEventListener(event, showSound);
 showSound();
 
-const FIRST_TOUCH_EVENTS = ['pointerdown', 'touchend', 'click', 'keydown'] as const;
-function startMusic() {
-  if (musicStarted) return;
-  music.muted = sound.muted;
-  music
-    .play()
-    .then(() => {
-      musicStarted = true;
-      for (const event of FIRST_TOUCH_EVENTS) window.removeEventListener(event, startMusic, true);
-      showSound();
-    })
-    // Refused: no touch yet. The next one tries again.
-    .catch(() => undefined);
-}
-const waitForTouch = () => {
-  for (const event of FIRST_TOUCH_EVENTS) window.addEventListener(event, startMusic, true);
-};
-waitForTouch();
-// The demo never pauses the music itself. When the system does (a media key, a phone call), the next touch resumes it.
-music.addEventListener('pause', () => {
-  musicStarted = false;
-  showSound();
-  waitForTouch();
+// A tab in the background: the story stands still there, so the music waits too and comes back with the tab.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    pausedForBackground = !music.paused;
+    music.pause();
+  } else if (pausedForBackground || (musicWanted && music.paused && storyStarted())) {
+    pausedForBackground = false;
+    void playMusic();
+  }
 });
 
 let screen: DemoScreen = SCREENS[0]!;
 /** True while "00 Full story" is chosen: the screens follow one another instead of looping. */
 let story = true;
 let storyTimer = 0;
+/** Counts starts of the story, so an answer about the music that comes late does not start an old one. */
+let startCount = 0;
 let view: ScreenView | null = null;
 let screenTimeline: gsap.core.Timeline | null = null;
 /** Counts renders, so a screen that finished loading after the next one was chosen does not start. */
@@ -389,12 +419,61 @@ function advance() {
   render();
 }
 
-/** The full story from its first screen, with the music from its start. */
+/** True once a screen has been shown: before that only the start screen is up. */
+const storyStarted = () => view !== null;
+
+/**
+ * The full story from its first screen, with the music from its start: both begin together.
+ * Where the browser holds the sound back until the user has touched the page, the start screen asks for that tap.
+ */
 function startStory() {
   story = true;
   screen = SCREENS[0]!;
+  ui.screenSelect.value = STORY.id;
+  clearScreen();
   music.currentTime = 0;
+  ui.start.hidden = false;
+  ui.start.classList.remove('start--ask');
+  if (!musicWanted) return beginStory();
+  const asked = ++startCount;
+  // The story does not wait for a slow download of the track: after a moment it starts without it.
+  const begin = () => asked === startCount && beginStory();
+  const patience = window.setTimeout(begin, MUSIC_PATIENCE_SECONDS * 1000);
+  void playMusic().then((result) => {
+    if (asked !== startCount) return;
+    if (result !== 'blocked') return begin();
+    window.clearTimeout(patience);
+    ui.start.classList.add('start--ask');
+    showStoryPanel('tap the phone to start');
+  });
+}
+
+/** The first screen comes up; the start screen stays, without its hint, until that screen is loaded. */
+function beginStory() {
+  startCount += 1;
+  ui.start.classList.remove('start--ask');
   render();
+}
+
+/** Takes the current screen down, as before the first one is shown. */
+function clearScreen() {
+  window.clearTimeout(storyTimer);
+  view?.destroy();
+  view = null;
+  screenTimeline?.kill();
+  screenTimeline = null;
+  renderCount += 1;
+  ui.screen.classList.remove('screen--loading');
+  ui.controls.replaceChildren();
+  showStoryPanel('starting');
+}
+
+/** The panel while the full story has no screen up yet. */
+function showStoryPanel(state: string) {
+  ui.title.textContent = `${STORY.label} · ${state}`;
+  ui.seek.closest<HTMLElement>('.field')!.style.display = 'none';
+  ui.note.parentElement!.hidden = true;
+  ui.json.textContent = '';
 }
 
 /**
@@ -451,6 +530,7 @@ function render() {
   void screenLoaded(view.parts).then(() => {
     if (current !== renderCount) return;
     ui.screen.classList.remove('screen--loading');
+    ui.start.hidden = true;
     play();
     if (story && view?.skipWait) storyTimer = window.setTimeout(() => view?.skipWait?.(), STORY_WAIT_SECONDS * 1000);
   });
@@ -474,8 +554,19 @@ ui.device.value = String(DEFAULT_DEVICE);
 ui.screenSelect.addEventListener('change', () => {
   if (ui.screenSelect.value === STORY.id) return startStory();
   story = false;
+  startCount += 1;
+  ui.start.hidden = true;
   screen = SCREENS.find((candidate) => candidate.id === ui.screenSelect.value) ?? screen;
   render();
+  // Choosing a screen is a touch of the page: the music may start here if it has not yet.
+  if (musicWanted) void playMusic();
+});
+// The start screen: the tap the browser wants before it lets the music sound. Story and music begin with it.
+ui.start.addEventListener('click', () => {
+  const asked = ++startCount;
+  const begin = () => asked === startCount && beginStory();
+  window.setTimeout(begin, MUSIC_PATIENCE_SECONDS * 1000);
+  void playMusic().then(begin);
 });
 ui.device.addEventListener('change', applyDevice);
 // Replay: the screen from its start, or the whole story from 01.
@@ -492,5 +583,6 @@ ui.seek.addEventListener('input', () => {
 window.addEventListener('resize', applyDevice);
 new ResizeObserver(placeStills).observe(ui.card);
 
+ui.start.style.backgroundImage = `url("${START_PICTURE}")`;
 applyDevice();
-document.fonts.ready.then(render);
+document.fonts.ready.then(startStory);

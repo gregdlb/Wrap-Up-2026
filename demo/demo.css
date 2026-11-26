@@ -56,7 +56,8 @@ body {
 }
 
 /* Until the screen's images are loaded only its background shows. */
-.screen--loading > :not(#arc) {
+/* (The start screen of the full story stays up while the first screen loads.) */
+.screen--loading > :not(#arc):not(#start) {
   visibility: hidden;
 }
 
@@ -361,6 +362,44 @@ body {
 .demo-video {
   display: block;
   background: none;
+}
+
+/*
+ * The start screen of the full story: the gift paper of 01 standing still, over everything on the phone.
+ * The hint is the "Tap to start" pill of the Figma frames of 01 (there at left 129, top 733 of 360 x 782).
+ */
+.start {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #023620 center / cover no-repeat;
+  cursor: pointer;
+}
+
+.start[hidden] {
+  display: none;
+}
+
+.start__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background: #fff;
+  color: #27272a;
+  font: 500 14px / normal 'Rethink Sans', system-ui, sans-serif;
+  white-space: nowrap;
+  visibility: hidden;
+}
+
+/* The browser has refused the sound: now the tap is asked for. */
+.start--ask .start__hint {
+  visibility: visible;
 }
 
 /* Screen 01: the animator's videos cover the screen like a background, one over the other. */

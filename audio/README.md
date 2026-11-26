@@ -1,6 +1,8 @@
 # Music of the demo
 
-The demo plays `happy-music.mp3` in a loop; it starts with the first tap and the SoundButton mutes it.
+The demo plays `happy-music.mp3` in a loop. It starts together with the full story, after the tap on "Tap to start"
+where the browser asks for one, and the SoundButton mutes it. The button shows "unmuted" only while the music
+really sounds: when the browser or the system stops it, the button shows that, and a tap on it brings the music back.
 It is demo material: the app chooses its own music.
 
 | File | Track | Author | License | Source |
