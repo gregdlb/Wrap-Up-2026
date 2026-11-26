@@ -199,14 +199,6 @@ body {
   white-space: nowrap;
 }
 
-.headline__row--parts .headline__highlight {
-  padding: 2px 10px 0;
-}
-
-/* As in Figma, a highlight that starts the line has its text flush with the text column. */
-.headline__row--parts .headline__highlight:first-child {
-  padding-left: 0;
-}
 
 /* The slot for the names of screen 08 is as wide as the text column, so the component can fit long names. */
 .headline__row--slot {
@@ -302,9 +294,13 @@ body {
   height: 16px;
 }
 
+/*
+ * 10 px on both sides of the word. Figma has no padding on the left of a highlight that starts a line;
+ * the demo adds it there too, so every highlight looks the same (decided for the demo, not from Figma).
+ */
 .headline__highlight {
   position: relative;
-  padding: 2px 10px 0 0;
+  padding: 2px 10px 0;
   white-space: nowrap;
 }
 

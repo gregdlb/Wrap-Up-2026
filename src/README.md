@@ -833,19 +833,9 @@ not span the screen.
 
 A loop with the screen's background painted in: the path of stepping stones. The picture is a 360 x 213.33
 window of the screen: `left: 0; top: 315.67px` on the Figma screen, `top: -97.33px` in the 360 x 350 frame of
-WeeksCard. Lay it under WeeksCard and **under the screen's text**. The picture is cut at its bottom, which shows
-until the card has come in, so fade the bottom 64 px out (in Figma px: multiply by the card's `fit`):
-
-```css
-.path-video {
-  --fade: linear-gradient(to bottom, #000 calc(100% - 64px), transparent);
-  -webkit-mask-image: var(--fade);
-  mask-image: var(--fade);
-}
-```
-
-Where the video does not span the screen, fade its sides too, as for the scenes of 06; with both masks set
-`mask-composite: intersect` (`-webkit-mask-composite: source-in`).
+WeeksCard. Lay it under WeeksCard and **under the screen's text**. The animator's picture is cut at its bottom,
+which showed until the card had come in, so both files fade out over their lower 96 px (Figma px): the fade is
+in the files, nothing to add. Where the video does not span the screen, fade its sides as for the scenes of 06.
 
 ### 08 Who you cared for: the hands
 
@@ -994,6 +984,14 @@ ffmpeg -i source.mov -map 0:v:0 -map_metadata -1 \
   BT.709 makes Safari and iOS show the mid-tones up to 10 levels lighter than Chrome shows the WebM.
 - `-g` is the frame rate (`30` for the door and for 01). `-q:v` is the quality: `80` for the scenes and for
   04, 07 and 10, which lose their fine texture below that, `72` for the garlands, the door, the hands and 01.
+- The bottom fade of `07-weeks-stones` is one more step at the start of `-vf`, for both files: every channel
+  times a smooth step over the lower 288 of the 640 rows.
+
+  ```
+  format=gbrap12le,geq=r='r(X,Y)*F':g='g(X,Y)*F':b='b(X,Y)*F':a='alpha(X,Y)*F',
+  ```
+
+  with `F` standing for `(st(0,clip((639-Y)/288,0,1))*0+ld(0)*ld(0)*(3-2*ld(0)))`.
 - For 07, 08 and 10 the animator's WebM has another canvas than the ProRes (1080 x 1200, the picture centered
   in it, and for 08 also enlarged 1.2 times), so their WebM was made from the ProRes to match the `.mov`:
 

@@ -44,7 +44,7 @@ const STORY = { id: '00', label: '00 Full story' };
 const STORY_WAIT_SECONDS = 3;
 
 /** The demo's music. See audio/README.md for the track and its license. */
-const MUSIC = { src: new URL('../audio/shine-blitz.mp3', import.meta.url).href, volume: 0.6 };
+const MUSIC = { src: new URL('../audio/happy-music.mp3', import.meta.url).href, volume: 0.6 };
 
 const PROGRESS_SEGMENTS = 12;
 
@@ -350,23 +350,14 @@ function placeStills() {
       node.style.transform = `rotate(${still.rotate ?? 0}deg) scale(${scale})`;
       box.append(node);
     }
-    const fades: string[] = [];
     if (still.softSides) {
       // Only where the picture does not reach both sides of the screen (`screenLeft` and `screenWidth` are the screen's).
       const boxLeft = screenLeft + left + still.x * scale;
       const reachesSides = boxLeft <= 0.5 && boxLeft + still.width * scale >= screenWidth - 0.5;
       const size = still.softSides * scale;
-      if (!reachesSides) fades.push(`linear-gradient(to right, transparent, #000 ${size}px, #000 calc(100% - ${size}px), transparent)`);
-    }
-    if (still.softBottom) {
-      fades.push(`linear-gradient(to bottom, #000 calc(100% - ${still.softBottom * scale}px), transparent)`);
-    }
-    if (fades.length > 0) {
-      box.style.setProperty('-webkit-mask-image', fades.join(', '));
-      box.style.setProperty('mask-image', fades.join(', '));
-      // Several fades: the picture shows only where every one of them lets it through.
-      box.style.setProperty('-webkit-mask-composite', 'source-in');
-      box.style.setProperty('mask-composite', 'intersect');
+      const fade = `linear-gradient(to right, transparent, #000 ${size}px, #000 calc(100% - ${size}px), transparent)`;
+      box.style.setProperty('-webkit-mask-image', reachesSides ? 'none' : fade);
+      box.style.setProperty('mask-image', reachesSides ? 'none' : fade);
     }
     return box;
   };

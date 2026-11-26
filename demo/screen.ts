@@ -69,8 +69,6 @@ export interface Still {
    * screen, those edges fade out over this many Figma px.
    */
   softSides?: number;
-  /** The bottom edge fades out over this many Figma px, for a picture that is cut at its bottom. */
-  softBottom?: number;
   opacity?: number;
   image?: string;
   /** For stills that are not a single image, e.g. a sticker. Built at Figma size; the shell scales it. */

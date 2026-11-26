@@ -21,10 +21,21 @@ const PATH = {
 /**
  * The picture is 1080 x 640 px, 3 per Figma px: a 360 x 213.33 window of the screen with its top 315.67 px down
  * (measured against the Figma picture). Here in the card's frame, which is at top 413.
+ * The animator's picture is cut at its bottom, which showed until the card had come in, so the files fade out
+ * over their lower 96 Figma px (a smooth step in the alpha, made when they were encoded).
  */
 const PATH_BOX = { x: 0, y: 315.67 - 413, width: 360, height: 640 / 3 };
-/** The picture is cut at its bottom, which shows until the card has come in: it fades out over this many Figma px. */
-const PATH_SOFT_BOTTOM = 64;
+
+/** Length of the longest run of weeks with a visit: the streak, as the card draws it. */
+function longestRun(weeks: boolean[]): number {
+  let longest = 0;
+  let run = 0;
+  for (const visited of weeks) {
+    run = visited ? run + 1 : 0;
+    longest = Math.max(longest, run);
+  }
+  return longest;
+}
 
 /** Month a week of 2026 falls in, counting weeks from 1 January; `dayOfWeek` 1 is its first day, 4 its middle. */
 function monthOfWeek(index: number, dayOfWeek: number): string {
@@ -45,7 +56,8 @@ export const weeksScreen: DemoScreen = {
       { length: state.totalWeeks },
       (_, index) => index >= streakStart || state.earlier.includes(index + 1),
     );
-    const data = { weeksInARow: state.weeksInARow, totalWeeks: state.totalWeeks, weeks };
+    // One number for the headline, the card and its squares: the streak counted from the weeks themselves.
+    const data = { weeksInARow: longestRun(weeks), totalWeeks: state.totalWeeks, weeks };
     const card = mountWeeksCard(layers.card, data, { onComplete: replay });
     const path = mountVideo(PATH, PATH_BOX, { loop: true });
 
@@ -98,7 +110,7 @@ export const weeksScreen: DemoScreen = {
       copy: {
         tag: 'Weeks in a row',
         rows: [
-          { text: String(state.weeksInARow), highlighted: true },
+          { text: String(data.weeksInARow), highlighted: true },
           { text: 'weeks in a row', highlighted: false },
         ],
         body: `At least one visit every week, from ${monthOfWeek(card.streak.start, 1)} to ${monthOfWeek(card.streak.end, 4)}.`,
@@ -109,7 +121,7 @@ export const weeksScreen: DemoScreen = {
       data,
       // The path with the stones behind the card is the animator's video. It is solid where the body text is,
       // so it goes under the text.
-      stills: [{ element: path.element, ...PATH_BOX, underText: true, softSides: 24, softBottom: PATH_SOFT_BOTTOM }],
+      stills: [{ element: path.element, ...PATH_BOX, underText: true, softSides: 24 }],
       destroy() {
         card.destroy();
         path.destroy();

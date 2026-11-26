@@ -10,7 +10,8 @@ interface State {
   weeks: SampleWeeks | null;
 }
 
-let state: State = { visitsPerMonth: [14, 17, 19, 21, 20, 22, 23, 23, 21, 33, 18, 17], weeks: null };
+/** The year the demo opens with: January is the busiest month. */
+let state: State = { visitsPerMonth: [33, 17, 19, 21, 20, 22, 23, 23, 21, 14, 18, 17], weeks: null };
 
 /** Copy for the four variants as written in Figma. The host app owns this text, not the component. */
 function copyFor(analysis: BusiestMonthCardAnalysis, weeks: SampleWeeks | null): ScreenCopy {
