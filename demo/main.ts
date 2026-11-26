@@ -147,7 +147,16 @@ function startMusic() {
     // Refused: no touch yet. The next one tries again.
     .catch(() => undefined);
 }
-for (const event of FIRST_TOUCH_EVENTS) window.addEventListener(event, startMusic, true);
+const waitForTouch = () => {
+  for (const event of FIRST_TOUCH_EVENTS) window.addEventListener(event, startMusic, true);
+};
+waitForTouch();
+// The demo never pauses the music itself. When the system does (a media key, a phone call), the next touch resumes it.
+music.addEventListener('pause', () => {
+  musicStarted = false;
+  showSound();
+  waitForTouch();
+});
 
 let screen: DemoScreen = SCREENS.find((candidate) => candidate.id === DEFAULT_SCREEN)!;
 /** True while "00 Full story" is chosen: the screens follow one another instead of looping. */
