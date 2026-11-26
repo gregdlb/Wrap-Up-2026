@@ -116,6 +116,13 @@ function createController(config) {
   };
 }
 
+// src/shared/counter.ts
+var SCREEN_SECONDS = 6;
+var VIDEO_HOLD_SECONDS = 1.5;
+function screenSeconds(videoSeconds = 0) {
+  return Math.max(SCREEN_SECONDS, Math.round((videoSeconds + VIDEO_HOLD_SECONDS) * 100) / 100);
+}
+
 // src/shared/fit.ts
 var DEFAULT_MAX_SCALE = 1.15;
 function containScale(box, design, maxScale) {
@@ -491,7 +498,6 @@ var BUSIEST_MONTH_CARD_STYLES = `
 // src/busiest-month-card/busiest-month-card.ts
 var DEFAULT_LABELS = { visit: "visit", visits: "visits", perMonth: "a month" };
 var TIMING = {
-  screen: 6,
   pages: { at: 0.4, duration: 0.48, stagger: 0.06, offsetY: 24 },
   bars: { at: 1.05, endAt: 2.5, stagger: 0.04, minDuration: 0.3 },
   counter: { at: 1.05, endAt: 2.5 },
@@ -615,9 +621,9 @@ function fitToContainer(root, maxScale) {
     root.style.setProperty("--wu-u", `${scale}px`);
   });
 }
-function buildTimeline(view, target, format) {
+function buildTimeline(view, target, format, seconds) {
   const { pages, bars, counter, highlight } = TIMING;
-  const timeline = holdTimeline(TIMING.screen);
+  const timeline = holdTimeline(seconds);
   const barDuration = Math.max(bars.minDuration, bars.endAt - bars.at - bars.stagger * (view.bars.length - 1));
   let counted = 0;
   const count = {
@@ -639,6 +645,7 @@ function buildTimeline(view, target, format) {
   }, highlight.at);
   return timeline;
 }
+var GARLAND_VIDEO_SECONDS = { 3: 5 };
 function mountBusiestMonthCard(el, data, options = {}) {
   const { locale = "en-US", autoplay = false, onComplete, maxScale = DEFAULT_MAX_SCALE } = options;
   const labels = { ...DEFAULT_LABELS, ...options.labels };
@@ -655,7 +662,9 @@ function mountBusiestMonthCard(el, data, options = {}) {
   view.root.setAttribute("aria-label", options.ariaLabel ?? describe(analysis, data, unit, finalValue, locale));
   el.append(view.root);
   const stopFitting = fitToContainer(view.root, maxScale);
-  const timeline = buildTimeline(view, analysis.value, format);
+  const month = options.month ?? (analysis.variant === "busiest_week" ? undefined : analysis.primaryIndex + 1);
+  const garlandSeconds = month === undefined ? undefined : GARLAND_VIDEO_SECONDS[month];
+  const timeline = buildTimeline(view, analysis.value, format, screenSeconds(garlandSeconds));
   addBlankFlips(timeline, view.pages[0]);
   const controller = createController({
     timeline,

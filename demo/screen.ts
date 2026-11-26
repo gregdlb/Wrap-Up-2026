@@ -62,6 +62,11 @@ export interface Still {
   behind?: boolean;
   /** Under the screen's text as well as the card: for a picture that is solid where the text is. */
   underText?: boolean;
+  /**
+   * For a picture that is cut straight at its left and right edge: where it does not reach both sides of the
+   * screen, those edges fade out over this many Figma px.
+   */
+  softSides?: number;
   opacity?: number;
   image?: string;
   /** For stills that are not a single image, e.g. a sticker. Built at Figma size; the shell scales it. */

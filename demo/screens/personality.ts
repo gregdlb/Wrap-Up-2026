@@ -42,39 +42,46 @@ const VALUES: Record<string, { type: PersonalityValueType; random: () => number 
   juggler: { type: 'number', random: () => randomInt(2, 4) },
 };
 
-/** The frame's top on the 782 px tall Figma screen; the scenes are placed in screen coordinates in Figma. */
+/** The frame's top on the 782 px tall Figma screen; the scenes are placed in screen coordinates. */
 const CARD_TOP = 413;
 
 const videoFiles = import.meta.glob<string>('../../video/06-personality-*', { eager: true, query: '?url', import: 'default' });
 
 /**
- * The animator's scene videos, by personality; the other types keep their still.
- * Each picture is 1080 x 1080 px and fills the 400 x 400 box of the Figma scene.
+ * The animator's scene videos, by personality; a type without one would keep its still.
+ * Each picture is 1080 x 1080 px and shows a 360 x 360 window of the Figma screen, 3 video px per Figma px:
+ * as wide as the screen, with its top `top` px down the 782 px tall screen. That is not the box of the Figma
+ * scene layer (400 or 480 px wide, running past both sides of the screen); the tops are measured so that the
+ * picture lies on the Figma scene.
  * A `loop` repeats for as long as the screen is shown; the others play once and stay on their last frame.
  */
-const SCENE_VIDEOS: Record<string, { file: string; loop: boolean }> = {
-  early_bird: { file: 'early-bird', loop: false },
-  night_owl: { file: 'night-owl', loop: true },
-  midday_hero: { file: 'midday-hero', loop: true },
-  rock: { file: 'rock', loop: false },
-  steady_one: { file: 'steady-one', loop: true },
+const SCENE_VIDEOS: Record<string, { file: string; top: number; loop: boolean }> = {
+  early_bird: { file: 'early-bird', top: 265.33, loop: false },
+  night_owl: { file: 'night-owl', top: 268, loop: true },
+  midday_hero: { file: 'midday-hero', top: 285.67, loop: true },
+  rock: { file: 'rock', top: 258.83, loop: false },
+  steady_one: { file: 'steady-one', top: 254, loop: true },
+  every_day_hero: { file: 'every-day-hero', top: 242, loop: true },
+  marathoner: { file: 'marathoner', top: 288.67, loop: true },
+  weekend_warrior: { file: 'weekend-warrior', top: 291.67, loop: true },
+  juggler: { file: 'juggler', top: 320.67, loop: true },
 };
+const SCENE_PICTURE = { width: 360, height: 360 };
 
 /**
- * The scene videos are solid up to their left and right edge, where the stills fade out over about this many
- * Figma px. The same fade, as a mask, keeps a cut side from showing where the scene is narrower than the screen.
+ * The scene videos are cut straight at their left and right edge, where the stills fade out over about this
+ * many Figma px. Where the card is scaled down and the scene is narrower than the screen, the same fade,
+ * as a mask, keeps the cut sides from showing.
  */
 const SCENE_SOFT_SIDES = 24;
 
-/** The scene video of a personality at the size of its Figma box, or null for a type that has none. */
+/** The scene video of a personality and its top on the screen, or null for a type that has none. */
 function sceneVideo(look: PersonalityLook) {
   const video = SCENE_VIDEOS[look.key];
   if (!video) return null;
   const file = (extension: string) => videoFiles[`../../video/06-personality-${video.file}.${extension}`] ?? '';
-  return mountVideo({ hevc: file('mov'), webm: file('webm') }, look.scene, {
-    loop: video.loop,
-    softSides: SCENE_SOFT_SIDES,
-  });
+  const player = mountVideo({ hevc: file('mov'), webm: file('webm') }, SCENE_PICTURE, { loop: video.loop });
+  return { player, top: video.top };
 }
 
 let typeKey = 'early_bird';
@@ -100,7 +107,7 @@ export const personalityScreen: DemoScreen = {
     };
     const card = mountPersonalityCard(layers.card, data, { onComplete: replay });
     const scene = sceneVideo(look);
-    const sceneBox = {
+    const stillBox = {
       x: look.scene.left,
       y: look.scene.top - CARD_TOP,
       width: look.scene.width,
@@ -146,21 +153,28 @@ export const personalityScreen: DemoScreen = {
         ],
         body: look.body.text,
       },
-      parts: scene ? [card, scene] : [card],
+      parts: scene ? [card, scene.player] : [card],
       duration: card.duration,
       data,
       note: `${look.name} · ${values.type}`,
-      // The scene behind the card: the animator's video where we have it, a still for the other types.
+      // The scene behind the card: the animator's video, or the still for a type that has none.
       // The videos have the sky painted in up to the headline and the body text, so they go under the text;
-      // the stills are see-through there and stay where Figma has them, above it.
+      // a still is see-through there and stays where Figma has it, above the text.
       stills: [
         scene
-          ? { element: scene.element, ...sceneBox, underText: true }
-          : { image: file(look.scene.file), ...sceneBox },
+          ? {
+              element: scene.player.element,
+              x: 0,
+              y: scene.top - CARD_TOP,
+              ...SCENE_PICTURE,
+              underText: true,
+              softSides: SCENE_SOFT_SIDES,
+            }
+          : { image: file(look.scene.file), ...stillBox },
       ],
       destroy() {
         card.destroy();
-        scene?.destroy();
+        scene?.player.destroy();
       },
     };
   },

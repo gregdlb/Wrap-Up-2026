@@ -17,8 +17,6 @@ export interface VideoSources {
 export interface VideoOptions {
   /** The video ends where it starts: repeat it for as long as the screen is shown. */
   loop?: boolean;
-  /** Fade the left and right edge out over this many px, for a picture that is solid up to its sides. */
-  softSides?: number;
 }
 
 export interface DemoVideo extends Playable {
@@ -47,7 +45,7 @@ export function mountVideo(
   size: { width: number; height: number },
   options: VideoOptions = {},
 ): DemoVideo {
-  const { loop = false, softSides = 0 } = options;
+  const { loop = false } = options;
   const video = document.createElement('video');
   // Attributes, not only properties: iOS reads `muted` and `playsinline` from the markup.
   video.muted = true;
@@ -63,11 +61,6 @@ export function mountVideo(
   video.className = 'demo-video';
   video.style.width = `${size.width}px`;
   video.style.height = `${size.height}px`;
-  if (softSides > 0) {
-    const fade = `linear-gradient(to right, transparent, #000 ${softSides}px, #000 calc(100% - ${softSides}px), transparent)`;
-    video.style.setProperty('-webkit-mask-image', fade);
-    video.style.setProperty('mask-image', fade);
-  }
 
   // The order matters. Safari takes the first one. A browser that plays HEVC but not its alpha (Chrome)
   // turns the bare "hvc1" down, because it only accepts a full codec string, and goes on to the WebM.

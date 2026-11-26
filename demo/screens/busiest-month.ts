@@ -52,18 +52,25 @@ function copyFor(analysis: BusiestMonthCardAnalysis, weeks: SampleWeeks | null):
 const videoFiles = import.meta.glob<string>('../../video/05-busiest-month-*', { eager: true, query: '?url', import: 'default' });
 
 /**
- * The animator's garland videos, by month index (0 = January); the other months keep their still.
- * Each one is a loop: it repeats for as long as the screen is shown.
+ * The animator's garland videos, by month index (0 = January); a month without one would keep its still.
+ * A loop repeats for as long as the screen is shown; March plays once and stays on its last frame.
  * Every picture is 760 x 420 px. `x`, `y` is where its corner goes in the 360 x 350 "Months card" frame and
- * `perFigmaPx` how many video px make one Figma px, both measured so that the garland of the last frame lies
+ * `perFigmaPx` how many video px make one Figma px, both measured so that the garland of the first frame lies
  * on the Figma garland (the snowman and the heart included). The pictures are not all cut the same way.
  */
-const GARLAND_VIDEOS: Record<number, { file: string; x: number; y: number; perFigmaPx: number }> = {
+const GARLAND_VIDEOS: Record<number, { file: string; x: number; y: number; perFigmaPx: number; loop?: false }> = {
   0: { file: 'january', x: 53.5, y: -48, perFigmaPx: 3 },
   1: { file: 'february', x: 52.5, y: -50.75, perFigmaPx: 2.95 },
-  2: { file: 'march', x: 51.5, y: -49.5, perFigmaPx: 3 },
+  2: { file: 'march', x: 51.83, y: -49.33, perFigmaPx: 3, loop: false },
   3: { file: 'april', x: 49.5, y: -50, perFigmaPx: 3 },
   4: { file: 'may', x: 49.25, y: -48, perFigmaPx: 3 },
+  5: { file: 'june', x: 55.83, y: -45, perFigmaPx: 3 },
+  6: { file: 'july', x: 53, y: -48.67, perFigmaPx: 3 },
+  7: { file: 'august', x: 55.83, y: -48.67, perFigmaPx: 3 },
+  8: { file: 'september', x: 56.67, y: -32.67, perFigmaPx: 3 },
+  9: { file: 'october', x: 55.33, y: -26.83, perFigmaPx: 3 },
+  10: { file: 'november', x: 57.33, y: -35.33, perFigmaPx: 3 },
+  11: { file: 'december', x: 51.67, y: -33.67, perFigmaPx: 3 },
 };
 const GARLAND_PICTURE = { width: 760, height: 420 };
 
@@ -78,7 +85,7 @@ function garlandVideo(monthIndex: number) {
     height: GARLAND_PICTURE.height / video.perFigmaPx,
   };
   const file = (extension: string) => videoFiles[`../../video/05-busiest-month-${video.file}.${extension}`] ?? '';
-  return { box, player: mountVideo({ hevc: file('mov'), webm: file('webm') }, box, { loop: true }) };
+  return { box, player: mountVideo({ hevc: file('mov'), webm: file('webm') }, box, { loop: video.loop ?? true }) };
 }
 
 export const busiestMonthScreen: DemoScreen = {
@@ -90,7 +97,11 @@ export const busiestMonthScreen: DemoScreen = {
 
   render({ layers, controls, rerender, replay }) {
     const data = toData(state.visitsPerMonth, state.weeks?.weeks);
-    const card = mountBusiestMonthCard(layers.card, data, { onComplete: replay });
+    // With weeks on the card, the app tells it the month: in March the garland video makes the screen longer.
+    const card = mountBusiestMonthCard(layers.card, data, {
+      onComplete: replay,
+      ...(state.weeks ? { month: state.weeks.monthIndex + 1 } : {}),
+    });
     const { analysis } = card;
     const monthIndex = state.weeks?.monthIndex ?? analysis.primaryIndex;
     const garland = garlandVideo(monthIndex);
@@ -143,7 +154,7 @@ export const busiestMonthScreen: DemoScreen = {
       duration: card.duration,
       data,
       note: analysis.variant,
-      // The garland on the card's top edge: the animator's video where we have it, a still for the other months.
+      // The garland on the card's top edge: the animator's video, or the still for a month that has none.
       stills: garland ? [{ element: garland.player.element, ...garland.box }] : (GARLAND_STILLS[monthIndex] ?? []),
       destroy() {
         card.destroy();

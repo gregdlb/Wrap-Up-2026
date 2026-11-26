@@ -291,6 +291,13 @@ function placeStills() {
       node.style.transform = `rotate(${still.rotate ?? 0}deg) scale(${scale})`;
       box.append(node);
     }
+    if (still.softSides) {
+      // The card's box spans the screen, so its width is the screen's.
+      const reachesSides = left + still.x * scale <= 0.5 && left + (still.x + still.width) * scale >= width - 0.5;
+      const fade = `linear-gradient(to right, transparent, #000 ${still.softSides * scale}px, #000 calc(100% - ${still.softSides * scale}px), transparent)`;
+      box.style.setProperty('-webkit-mask-image', reachesSides ? 'none' : fade);
+      box.style.setProperty('mask-image', reachesSides ? 'none' : fade);
+    }
     return box;
   };
 
