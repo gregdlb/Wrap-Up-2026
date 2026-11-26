@@ -667,6 +667,19 @@ It only shows and reports the state. There is no audio in the component: mute an
 | `setTone(tone)` | Switches fill and icon color when the story moves between light and dark screens. |
 | `destroy()` | Removes the button. |
 
+**Music that starts by itself.** A webview, like a browser, does not let sound start before the user has
+touched the page, unless the app tells it to. For the music to start with the first screen, turn that
+requirement off in the Capacitor app's webview:
+
+- iOS (WKWebView): `configuration.mediaTypesRequiringUserActionForPlayback = []`, set on the configuration before
+  the webview is created;
+- Android (WebView): `webView.getSettings().setMediaPlaybackRequiresUserGesture(false)`.
+
+Check whether your Capacitor version already sets them. Where the requirement stays, as in a browser, do what
+the demo does: let the story run, start the music on the user's first touch of the page (at the place it would
+have reached by then), and until it really sounds show the button as muted with `setMuted(true)`. A tap on the
+button then switches the music on: do not also count that tap as "the first touch", or it toggles twice.
+
 **State across screens.** Mount the button once in a header that stays while the screens change, and call
 `setTone` on each screen: the state is kept. If the header is rebuilt per screen, keep the state in the app and
 pass it back in as `muted`.
