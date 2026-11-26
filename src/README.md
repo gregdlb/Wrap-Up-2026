@@ -822,8 +822,11 @@ are not all cut the same way, so each has its own box in the 360 x 350 frame of 
 
 Fit it like the door: multiply the box by the card's `fit` and add the card's offset in its container, with 360
 and 350 as the frame (`placeDoor` above, with these numbers). The garland is in the picture from the first
-frame; the video only makes it move. All are loops except March: there the snowdrops rise in the first 2.5 s
-and stay up, swaying a little, and the video is played once (the screen lasts 6.5 s).
+frame; the video only makes it move. Most garlands have a thin darker or tinted line along their soft edges
+(gray-green around the snow of March, pink around the tulips of April): it is in the animator's ProRes and WebM
+alike, not a result of the encoding or of how the video is placed. All are loops except March: there the
+snowdrops rise in the first 2.5 s and stay up, swaying a little, and the video is played once (the screen
+lasts 6.5 s).
 
 ### 06 Clock-in personality: the scenes
 
@@ -894,15 +897,13 @@ ffmpeg -i source.mov -map 0:v:0 -map_metadata -1 \
   `c * a + 255 * (1 - a)` when it is premultiplied with white, and `c` when it is straight (then use
   `format=gbrap12le,premultiply=inplace=1,` instead). Afterwards check the HEVC the same way: it must hold
   `c * a`.
-- January, February, April and May were made from their WebM (`-c:v libvpx-vp9 -i file.webm` and
-  `format=gbrap,premultiply=inplace=1,` at the start of `-vf`), because their ProRes was no longer at hand.
 - The `-vf` chain converts the colors itself and marks them BT.709 with the **sRGB** transfer curve. Handing
   the encoder RGB (`-pix_fmt bgra`) instead shifts saturated colors by about 5 levels, and marking the curve
   BT.709 makes Safari and iOS show the mid-tones up to 10 levels lighter than Chrome shows the WebM.
-- The Night Owl and The Rock were made from their WebM too.
 - `-g` is the frame rate (`30` for the door). `-q:v` is the quality: `80` for the scenes, which lose their fine
-  texture below that, `72` for the garlands. The door was made with `-pix_fmt bgra -q:v 62` and is marked
-  BT.709.
+  texture below that, `72` for the garlands and the door.
+- The door was made from its WebM, which holds straight alpha, because its ProRes was not at hand:
+  `-c:v libvpx-vp9 -i 03-visits-door.webm`, and `format=gbrap,premultiply=inplace=1,` at the start of `-vf`.
 
 The pictures are 3 px per Figma px: 760 x 420 for a garland of 253.33 x 140, 1080 x 1080 for a scene of
 360 x 360.
