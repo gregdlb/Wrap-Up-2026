@@ -114,10 +114,16 @@ export const introScreen: DemoScreen = {
     const root = document.createElement('div');
     root.className = 'intro';
 
-    const steps = PARTS.map(({ file, at }) => {
+    // With reduced motion the screen is its last picture from the start. That is the last frame of the logo
+    // video alone (the other two end empty), so only that one is fetched.
+    const steps = (still ? PARTS.slice(0, 1) : PARTS).map(({ file, at }) => {
       const url = (extension: string) => videoFiles[`../../video/01-${file}.${extension}`] ?? '';
       // Only the gift paper, which the screen opens with, is fetched at once; see below.
-      const video = mountVideo({ hevc: url('mov'), webm: url('webm') }, { width: 360, height: 782 }, { deferLoad: at > 0 });
+      const video = mountVideo(
+        { hevc: url('mov'), webm: url('webm') },
+        { width: 360, height: 782 },
+        { deferLoad: !still && at > 0 },
+      );
       // Like the background: it covers the screen, keeps its proportions and stays centered.
       Object.assign(video.element.style, { width: '100%', height: '100%' });
       root.append(video.element);
@@ -147,7 +153,7 @@ export const introScreen: DemoScreen = {
       steps,
       SECONDS,
       (clock) => {
-        // With reduced motion the screen is its last picture from the start: the logo, without these texts.
+        // With reduced motion there is no gift on the screen, so these texts do not show either.
         if (still) return void gsap.set([year, line], { opacity: 0 });
         clock.fromTo(
           [year, line],

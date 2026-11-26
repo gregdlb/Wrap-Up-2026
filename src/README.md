@@ -802,7 +802,8 @@ the animator's reference video of the whole intro:
 - The three files weigh 7 MB together, so have them on the device before the intro starts. Over a network,
   fetch them in the order they are needed (the gift first), and let the clock lead: a video that is behind it
   jumps to the clock's position, or is skipped if its time has passed, so the paper never opens over the logo.
-- With `prefers-reduced-motion` only the last frame of `01-with-brevy` shows: the logo.
+- With `prefers-reduced-motion` only the last frame of `01-with-brevy` shows: the logo. The other two videos
+  end empty, so they need not be fetched at all then.
 - **Texts and header come from Figma, not from the videos**, with one exception: "What a year" is part of the
   `01-what-a-year` picture and cannot be changed. On the gift (frame "01 Welcome · Gift") there are "2026"
   (Rethink Sans ExtraBold 72 px, yellow-300, at left 16, top 120) and "Psst, Maria. / Your year is ready /
