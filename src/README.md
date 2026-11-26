@@ -902,8 +902,6 @@ ffmpeg -i source.mov -map 0:v:0 -map_metadata -1 \
   BT.709 makes Safari and iOS show the mid-tones up to 10 levels lighter than Chrome shows the WebM.
 - `-g` is the frame rate (`30` for the door). `-q:v` is the quality: `80` for the scenes, which lose their fine
   texture below that, `72` for the garlands and the door.
-- The door was made from its WebM, which holds straight alpha, because its ProRes was not at hand:
-  `-c:v libvpx-vp9 -i 03-visits-door.webm`, and `format=gbrap,premultiply=inplace=1,` at the start of `-vf`.
 
 The pictures are 3 px per Figma px: 760 x 420 for a garland of 253.33 x 140, 1080 x 1080 for a scene of
 360 x 360.
