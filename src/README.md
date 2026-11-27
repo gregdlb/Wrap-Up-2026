@@ -710,7 +710,7 @@ The animator's layers come as video with a transparent background. They are not 
 | `05-busiest-month-april` | 05, April | 760 x 420 px | 4.54 s | loop | 6 s |
 | `05-busiest-month-may` | 05, May | 760 x 420 px | 4 s | loop | 6 s |
 | `05-busiest-month-june` | 05, June | 760 x 420 px | 3.67 s | loop | 6 s |
-| `05-busiest-month-july` … `-december` | 05, July to December | 760 x 420 px | 5 s | loop | 6 s |
+| `05-busiest-month-july` … `-december` | 05, July to December | 760 x 420 px | 5 s (August 4.96 s) | loop | 6 s |
 | `06-personality-early-bird` | 06, The Early Bird | 1080 x 1080 px | 5.04 s, 24 fps | once | 6.54 s |
 | `06-personality-night-owl` | 06, The Night Owl | 1080 x 1080 px | 5 s | loop | 6 s |
 | `06-personality-midday-hero` | 06, The Midday Hero | 1080 x 1080 px | 3 s | loop | 6 s |
@@ -920,9 +920,10 @@ are not all cut the same way, so each has its own box in the 360 x 350 frame of 
 
 Fit it like the door: multiply the box by the card's `fit` and add the card's offset in its container, with 360
 and 350 as the frame (`placeDoor` above, with these numbers). The garland is in the picture from the first
-frame; the video only makes it move. Most garlands have a thin darker or tinted line along their soft edges
-(gray-green around the snow of March, pink around the tulips of April): it is in the animator's ProRes and WebM
-alike, not a result of the encoding or of how the video is placed. All are loops except March: there the
+frame; the video only makes it move. A few garlands still have a thin tinted line along their soft edges
+(pink around the leaves of April, a faint light green around the snowdrops of March), and in October a dark
+leaf and the pumpkin's stem are partly see-through: this is in the animator's ProRes and WebM alike, not a result
+of the encoding or of how the video is placed. All are loops except March: there the
 snowdrops rise in the first 2.5 s and stay up, swaying a little, and the video is played once (the screen
 lasts 6.5 s).
 
