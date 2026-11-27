@@ -536,6 +536,7 @@ ui.screenSelect.addEventListener('change', () => {
   // Choosing a screen is a touch of the page: the music may start here if it has not yet.
   if (musicWanted) void playMusic();
 });
+ui.device.addEventListener('change', applyDevice);
 // Replay: the screen from its start, or the whole story from 01.
 ui.replay.addEventListener('click', () => (story ? startStory() : play()));
 ui.seek.addEventListener('input', () => {
